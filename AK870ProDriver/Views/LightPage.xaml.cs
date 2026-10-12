@@ -30,7 +30,7 @@ namespace Ak870Pro.Views
             if (_loading || Busy) return;
             Persist();
             if (!MusicEngine.Running || AppState.State != ConnState.Connected) return;
-            int foremode = MusicCombo.SelectedIndex;
+            int foremode = MusicCombo.SelectedIndex + 1; // data=1..15
             bool ok = await AppState.Device.EnterMusicModeAsync(foremode);
             if (ok) MusicEngine.Start(foremode);
         }
@@ -98,8 +98,8 @@ namespace Ak870Pro.Views
             Busy = true; MusicBtn.IsEnabled = false;
             try
             {
-                // 官方 GetCurSel 返回 0-based 索引 (0..14), 直接作为协议 foremode
-                int foremode = MusicCombo.SelectedIndex;
+                // 官方 MComboBox AddItem data=1..15: foremode = 下拉索引 + 1
+                int foremode = MusicCombo.SelectedIndex + 1;
                 bool ok = await AppState.Device.EnterMusicModeAsync(foremode);
                 if (ok)
                 {
