@@ -337,11 +337,13 @@ namespace Ak870Pro.Services
         /// <summary>
         /// 系统设置（0x413FF0 完整序列, buf[i]=payload[i] 一一对应）:
         /// 04 18 → 04 17(payload[2]=1, payload[8]=1) → 00 设置包(流式分片, AA55@0x3E/0x3F, 无应答) → 04 02。
-        /// 设置包: payload[1]=1(固定), payload[2..4]=三个复选框, payload[5]=fn_switch,
-        ///         payload[6]=sleep_time, payload[7]=0, payload[8]=key_respondtime。
+        /// 设置包复选框实锤 (0x4140A7-0x4140D6 GetCheck 顺序 ↔ 对话框 0x4455xx lan ID):
+        ///   payload[2]=禁用ALT+TAB ([edi+0x678], lan 162), payload[3]=禁用ALT+F4 ([edi+0x67c], lan 161),
+        ///   payload[4]=禁用Window键 ([edi+0x680], lan 160)。
+        /// payload[5]=fn_switch, payload[6]=sleep_time, payload[7]=0, payload[8]=key_respondtime。
         /// 注意官方此序列**没有 04 F0**。
         /// </summary>
-        public async Task<bool> ApplySettingsAsync(bool fnB, bool fnC, int fnSwitch, int sleepTime, int respondTime)
+        public async Task<bool> ApplySettingsAsync(bool disAltTab, bool disAltF4, bool disWinKey, int fnSwitch, int sleepTime, int respondTime)
         {
             return await Task.Run(() =>
             {
@@ -350,14 +352,14 @@ namespace Ak870Pro.Services
 
                 var b = new byte[64];
                 b[0] = ClassSettings;
-                b[1] = 0x01;                 // 固定 1 [0x414088: word 0x0100]
-                b[2] = (byte)(fnB ? 1 : 0);  // 复选框1 [0x4140AB-0x4140C4]
-                b[3] = (byte)(fnC ? 1 : 0);  // 复选框2 [0x4140C7-0x4140D0]
-                b[4] = 0;                    // 复选框3 (官方第三项, 本 UI 无对应)
-                b[5] = (byte)fnSwitch;       // "fn_switch" [0x4140F7-0x41412C]
-                b[6] = (byte)sleepTime;      // "sleep_time" [0x414139-0x41417E]
-                b[8] = (byte)respondTime;    // "key_respondtime" [0x41418B-0x4141D0] (buf[7]=0)
-                b[0x3E] = 0xAA; b[0x3F] = 0x55;  // [0x4141D6: word 0x55AA]
+                b[1] = 0x01;                    // 固定 1 [0x414088: word 0x0100]
+                b[2] = (byte)(disAltTab ? 1 : 0);   // 禁用ALT+TAB  [0x678] lan 162
+                b[3] = (byte)(disAltF4 ? 1 : 0);    // 禁用ALT+F4   [0x67c] lan 161
+                b[4] = (byte)(disWinKey ? 1 : 0);   // 禁用Window键 [0x680] lan 160
+                b[5] = (byte)fnSwitch;          // "fn_switch" [0x4140F7-0x41412C]
+                b[6] = (byte)sleepTime;         // "sleep_time" [0x414139-0x41417E]
+                b[8] = (byte)respondTime;       // "key_respondtime" [0x41418B-0x4141D0] (buf[7]=0)
+                b[0x3E] = 0xAA; b[0x3F] = 0x55; // [0x4141D6: word 0x55AA]
                 if (!SendDataPacket(b)) return false;
                 return SendPacket(Cmd(CmdApply), true);
             });
@@ -458,18 +460,21 @@ namespace Ak870Pro.Services
         /// <summary>
         /// 2.4G 音乐律动数据帧 (官方 0x4330C0 栈帧逐字节实锤, 经 0x4501C0 发送 len=0x21):
         ///   buf 直接含 ReportID 槽: buf[0]=0, buf[1]=0x0b, buf[2]=0x1c, buf[3]=0,
-        ///   buf[4]=GetCurData(颜色)=foremode, buf[5]=GetCurData(副下拉), buf[6]=状态字节,
-        ///   buf[7..27]=21 列频谱高度, buf[32]=校验和 (0x4501C0 覆盖 buf[0..31] 求和)。
+        ///   buf[4]=GetCurData(显示模式下拉)=foremode, buf[5]=GetCurData(背景下拉)=bgMode,
+        ///   buf[6]=背景亮度滑块位置([[0x638]+0x144]), buf[7..27]=21 列频谱高度,
+        ///   buf[32]=校验和 (0x4501C0 覆盖 buf[0..31] 求和)。
         /// 动画帧允许丢帧 → fire-and-forget (不做回显等待, 保持 33ms 节奏)。
         /// </summary>
-        public Task<bool> SendMusicFrame24Async(byte[] heights21, int foremode)
+        public Task<bool> SendMusicFrame24Async(byte[] heights21, int foremode, int bgMode, int bgBright)
         {
             return Task.Run(() =>
             {
                 if (_channel == null || _channel.Kind != ChannelKind.Report33) return false;
                 var frame = new byte[HidTransport.ReportFrameSize];
                 frame[1] = 0x0b; frame[2] = 0x1c;   // buf[1..2]
-                frame[4] = (byte)foremode;          // buf[4]=颜色模式下拉数据
+                frame[4] = (byte)foremode;          // buf[4]=显示模式 data
+                frame[5] = (byte)bgMode;            // buf[5]=背景灯光显示模式 data
+                frame[6] = (byte)bgBright;          // buf[6]=背景亮度滑块位置
                 Array.Copy(heights21, 0, frame, 7, Math.Min(AudioSpectrum.Columns, heights21.Length)); // buf[7..27]=21列频谱
                 byte sum = 0;
                 for (int k = 1; k < 0x20; k++) sum += frame[k];
@@ -586,5 +591,42 @@ namespace Ak870Pro.Services
         /// <summary>日志页: 发送原始数据流（按通道分片）。</summary>
         public Task<bool> SendRawStreamAsync(byte[] stream) =>
             Task.Run(() => SendStream(stream, fast: false));
+
+        /// <summary>
+        /// 专属配置改键表上传 (官方 0x418590 USB / 0x418E30 2.4G, 连接后事件 6 自动触发)。
+        /// table576 = 144 槽 × 4B (槽号 = 布局 key_index): 默认 [05 03 00 00], 禁用 [00 00 00 00],
+        /// 键盘按键 [02 modMask usage], 表尾 AA55@0x23E/0x23F。
+        /// USB: 04 18 → 04 11(常规)/04 27(Fn层) [8]=9(包数) → 576B 流(RID=0 ×9) → 04 02 → 04 F0 (全部 resp=1)。
+        /// 2.4G: 21 帧 (20×28B + 16B) 回显事务, payload[0]=层(0常规/1Fn), [1]=帧长, [2]=帧序号, [3..]=数据。
+        /// </summary>
+        public async Task<bool> UploadKeyRemapAsync(byte[] table576, bool fnLayer)
+        {
+            if (table576.Length != 0x240) throw new ArgumentException("改键表必须 576 字节", nameof(table576));
+            return await Task.Run(() =>
+            {
+                if (_channel?.Kind == ChannelKind.Report33)
+                {
+                    for (int i = 0; i <= 20; i++)
+                    {
+                        int off = i * 28;
+                        int n = Math.Min(28, table576.Length - off);
+                        var p = new byte[64];
+                        p[0] = (byte)(fnLayer ? 1 : 0);
+                        p[1] = (byte)n;
+                        p[2] = (byte)i;
+                        Array.Copy(table576, off, p, 3, n);
+                        if (!SendAndRecv(_channel, p, n + 3, $"改键帧#{i}")) return false;
+                    }
+                    AppLog.Log($"改键表({(fnLayer ? "Fn层" : "常规")}) 21 帧上传完成");
+                    return true;
+                }
+
+                if (!SendPacket(Cmd(CmdBegin), true)) return false;
+                if (!SendPacket(Cmd((byte)(fnLayer ? 0x27 : 0x11), (8, (byte)9)), true)) return false;
+                if (!SendStream(table576)) return false;
+                if (!SendPacket(Cmd(CmdApply), true)) return false;
+                return SendPacket(Cmd(CmdEnd), true);
+            });
+        }
     }
 }

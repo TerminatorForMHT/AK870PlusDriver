@@ -7,25 +7,10 @@ namespace Ak870Pro.Views
     public sealed partial class HomePage : Page
     {
         private bool Busy;
-        private bool _loading;
 
         public HomePage()
         {
             InitializeComponent();
-            LoadFromSettings();
-            RespondSlider.ValueChanged += (_, e) => RespondText.Text = $"{(int)e.NewValue} 档";
-        }
-
-        private void LoadFromSettings()
-        {
-            _loading = true;
-            var s = SettingsService.Current;
-            FnAltF4.IsChecked = s.FnAltF4;
-            FnAltTab.IsChecked = s.FnAltTab;
-            FnSwitch.Value = s.FnSwitch;
-            SleepCombo.SelectedIndex = s.SleepIndex;
-            RespondSlider.Value = s.RespondLevel;
-            _loading = false;
         }
 
         private async void Connect_Click(object sender, RoutedEventArgs e)
@@ -75,38 +60,6 @@ namespace Ak870Pro.Views
                 ToastService.Show(ok ? $"已选择层 {layer}" : "选择层失败", ok);
             }
             finally { Busy = false; }
-        }
-
-        private async void ApplySettings_Click(object sender, RoutedEventArgs e)
-        {
-            if (!RequireConnected()) return;
-            if (Busy) return;
-            Busy = true;
-            ApplySettingsBtn.IsEnabled = false;
-            try
-            {
-                int sleep = SleepCombo.SelectedIndex switch { 1 => 1, 2 => 5, 3 => 30, _ => 0 };
-                bool ok = await AppState.Device.ApplySettingsAsync(
-                    fnB: FnAltF4.IsChecked == true,
-                    fnC: FnAltTab.IsChecked == true,
-                    fnSwitch: (int)FnSwitch.Value,
-                    sleepTime: sleep,
-                    respondTime: (int)RespondSlider.Value);
-                if (ok) Persist();
-                ToastService.Show(ok ? "设置已应用" : "应用失败，详见协议日志", ok);
-            }
-            finally { Busy = false; ApplySettingsBtn.IsEnabled = true; }
-        }
-
-        private void Persist()
-        {
-            var s = SettingsService.Current;
-            s.FnAltF4 = FnAltF4.IsChecked == true;
-            s.FnAltTab = FnAltTab.IsChecked == true;
-            s.FnSwitch = (int)FnSwitch.Value;
-            s.SleepIndex = SleepCombo.SelectedIndex;
-            s.RespondLevel = (int)RespondSlider.Value;
-            SettingsService.Save();
         }
 
         private bool RequireConnected()

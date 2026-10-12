@@ -35,11 +35,14 @@
                 <NavigationViewItem Content="宏" Tag="macro">
                     <NavigationViewItem.Icon><FontIcon Glyph="&#xE943;"/></NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="协议日志" Tag="log">
+                <NavigationViewItem x:Name="LogNavItem" Content="协议日志" Tag="log" Visibility="Collapsed">
                     <NavigationViewItem.Icon><FontIcon Glyph="&#xE9F9;"/></NavigationViewItem.Icon>
                 </NavigationViewItem>
             </NavigationView.MenuItems>
             <NavigationView.FooterMenuItems>
+                <NavigationViewItem Content="设置" Tag="settings">
+                    <NavigationViewItem.Icon><FontIcon Glyph="&#xE713;"/></NavigationViewItem.Icon>
+                </NavigationViewItem>
                 <NavigationViewItem IsEnabled="False">
                     <TextBlock x:Name="StatusText" Text="未连接" Margin="4,0" VerticalAlignment="Center"/>
                 </NavigationViewItem>

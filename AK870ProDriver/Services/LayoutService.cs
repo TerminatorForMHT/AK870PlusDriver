@@ -38,14 +38,28 @@ namespace Ak870Pro.Services
         public static int ProtocolModeOf(int uiIndex)
             => uiIndex < 0 ? 1 : (uiIndex >= LightModes.Length - 1 ? 0 : uiIndex + 1);
 
-        /// <summary>音乐律动显示模式（language/2052.lan 106-120，MComboBox AddItem data=1..15；
-        /// 设备命令为单字节 foremode，05 01 帧 / 0x4346B0 USB 序列，键盘本地拾音）。索引 0..14 → foremode 1..15。</summary>
+        /// <summary>音乐律动"显示模式"下拉 (官方 0x41EF30 AddItem 顺序实锤)。
+        /// 注意: UI 顺序索引 ≠ 协议 data — 官方 MComboBox AddItem 第三个 push 才是 data 值,
+        /// 蓝=10/绿=11 反序, 屏光联动=100 且仅 USB 通道存在 (官方 0x41F1CD 按通道条件添加)。
+        /// 青/无/紫 不在前景下拉。进帧必须用 MusicModeData 映射, 严禁 SelectedIndex+1。</summary>
         public static readonly string[] MusicModes =
         {
             "绿色/黄色/红色","彩虹色","彩虹色反向","色谱","频谱循环",
-            "白色","红色","橙色","黄色","绿色",
-            "青色","无","蓝色","紫色","屏光联动"
+            "白色","红色","橙色","黄色","蓝色","绿色","屏光联动"
         };
+
+        /// <summary>MusicModes 各项的协议 data 值 (官方 AddItem data 实锤)。</summary>
+        public static readonly int[] MusicModeData = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 100 };
+
+        /// <summary>音乐律动"背景灯光显示模式"下拉 (官方 0x43B5C0 填充处实锤, 12 项, 无=0 开头)。</summary>
+        public static readonly string[] MusicBgModes =
+        {
+            "无","白色","红色","橙色","黄色","蓝色","绿色",
+            "绿色/黄色/红色","彩虹色","彩虹色反向","色谱","频谱循环"
+        };
+
+        /// <summary>MusicBgModes 各项的协议 data 值。</summary>
+        public static readonly int[] MusicBgModeData = { 0, 6, 7, 8, 9, 10, 11, 1, 2, 3, 4, 5 };
 
         public static List<Models.KeyInfo> LoadKeys()
         {

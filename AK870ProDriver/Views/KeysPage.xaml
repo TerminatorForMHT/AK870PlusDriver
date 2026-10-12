@@ -10,10 +10,11 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Spacing="8">
-            <TextBlock Text="按键设置 (04 23 / 04 20)" FontSize="28" FontWeight="SemiBold"/>
+            <TextBlock Text="按键设置 (04 23 / 04 20 / 04 11 改键)" FontSize="28" FontWeight="SemiBold"/>
             <StackPanel Orientation="Horizontal" Spacing="16">
                 <RadioButton x:Name="ModeRgb" Content="自定义 RGB 逐键颜色" IsChecked="True"/>
                 <RadioButton x:Name="ModeUser" Content="用户灯光 (单色开关)"/>
+                <RadioButton x:Name="ModeRemap" Content="专属配置改键"/>
             </StackPanel>
         </StackPanel>
 
@@ -39,28 +40,56 @@
                 <StackPanel Spacing="12">
                     <TextBlock x:Name="SelKeyText" Text="未选择按键" FontWeight="SemiBold"/>
 
-                    <TextBlock Text="红色 R" FontSize="12"/>
-                    <Slider x:Name="RSlider" Minimum="0" Maximum="255" Value="255"/>
-                    <TextBlock Text="绿色 G" FontSize="12"/>
-                    <Slider x:Name="GSlider" Minimum="0" Maximum="255" Value="0"/>
-                    <TextBlock Text="蓝色 B" FontSize="12"/>
-                    <Slider x:Name="BSlider" Minimum="0" Maximum="255" Value="0"/>
+                    <StackPanel x:Name="RgbPanel" Spacing="12">
+                        <TextBlock Text="红色 R" FontSize="12"/>
+                        <Slider x:Name="RSlider" Minimum="0" Maximum="255" Value="255"/>
+                        <TextBlock Text="绿色 G" FontSize="12"/>
+                        <Slider x:Name="GSlider" Minimum="0" Maximum="255" Value="0"/>
+                        <TextBlock Text="蓝色 B" FontSize="12"/>
+                        <Slider x:Name="BSlider" Minimum="0" Maximum="255" Value="0"/>
 
-                    <Border x:Name="ColorPreview" Height="36" CornerRadius="6" Background="Red"/>
+                        <Border x:Name="ColorPreview" Height="36" CornerRadius="6" Background="Red"/>
 
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button Content="设置此键" Click="SetKey_Click"/>
-                        <Button Content="清除此键" Click="ClearKey_Click"/>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="设置此键" Click="SetKey_Click"/>
+                            <Button Content="清除此键" Click="ClearKey_Click"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="全部清空" Click="ClearAll_Click"/>
+                            <Button Content="填充当前色" Click="FillAll_Click"/>
+                        </StackPanel>
+
+                        <Button x:Name="ApplyBtn" Content="应用到键盘" Click="Apply_Click"
+                                Style="{ThemeResource AccentButtonStyle}" HorizontalAlignment="Stretch"/>
+                        <TextBlock Text="应用 = 清除方案(0x80) + 04 23 上传 576B 槽位数据流。"
+                                   FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap"/>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button Content="全部清空" Click="ClearAll_Click"/>
-                        <Button Content="填充当前色" Click="FillAll_Click"/>
-                    </StackPanel>
 
-                    <Button x:Name="ApplyBtn" Content="应用到键盘" Click="Apply_Click"
-                            Style="{ThemeResource AccentButtonStyle}" HorizontalAlignment="Stretch"/>
-                    <TextBlock Text="应用 = 清除方案(0x80) + 04 23 上传 576B 槽位数据流。"
-                               FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap"/>
+                    <StackPanel x:Name="RemapPanel" Spacing="10" Visibility="Collapsed">
+                        <TextBlock Text="功能类型" FontSize="12"/>
+                        <ComboBox x:Name="RemapKindCombo" SelectedIndex="0" HorizontalAlignment="Stretch">
+                            <ComboBoxItem Content="默认 (透传)"/>
+                            <ComboBoxItem Content="禁用"/>
+                            <ComboBoxItem Content="映射为按键"/>
+                        </ComboBox>
+                        <TextBlock x:Name="TargetKeyLabel" Text="目标键" FontSize="12"/>
+                        <ComboBox x:Name="TargetKeyCombo" HorizontalAlignment="Stretch"/>
+                        <TextBlock x:Name="ModLabel" Text="附加修饰键" FontSize="12"/>
+                        <StackPanel Orientation="Horizontal" Spacing="2">
+                            <CheckBox x:Name="ModCtrl" Content="Ctrl" MinWidth="0"/>
+                            <CheckBox x:Name="ModShift" Content="Shift" MinWidth="0"/>
+                            <CheckBox x:Name="ModAlt" Content="Alt" MinWidth="0"/>
+                            <CheckBox x:Name="ModWin" Content="Win" MinWidth="0"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="写入此键" Click="RemapSet_Click"/>
+                            <Button Content="恢复默认" Click="RemapClear_Click"/>
+                        </StackPanel>
+                        <Button x:Name="RemapUploadBtn" Content="上传改键配置" Click="RemapUpload_Click"
+                                Style="{ThemeResource AccentButtonStyle}" HorizontalAlignment="Stretch"/>
+                        <TextBlock Text="上传 = 04 11 + 576B 改键表 (144槽×4B, 槽号=key_index)。改键对键盘全局生效 (含 Fn 层之外的普通层)。"
+                                   FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap"/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </Grid>

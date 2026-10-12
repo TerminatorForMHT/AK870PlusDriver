@@ -16,12 +16,31 @@ namespace Ak870Pro.Services
             public int LightBright { get; set; } = 5;
             public int LightSpeed { get; set; } = 3;
             public int MusicMode { get; set; }
-            // 主页功能设置
+            public int MusicAmp { get; set; } = 60;
+            public int MusicBgMode { get; set; }
+            public int MusicBgBright { get; set; } = 100;
+            // 功能设置 (设置页): 0x00 设置包 payload[2]=禁ALT+TAB, [3]=禁ALT+F4, [4]=禁Win键
             public bool FnAltF4 { get; set; }
             public bool FnAltTab { get; set; }
+            public bool FnWinKey { get; set; }
             public int FnSwitch { get; set; }
             public int SleepIndex { get; set; }
             public int RespondLevel { get; set; } = 3;
+            // DEBUG 模式: 控制协议日志页可见性 (设置页连点 7 次版本号切换)
+            public bool DebugMode { get; set; }
+            // 专属配置改键 (按键页)
+            public List<RemapEntry> KeyRemaps { get; set; } = new();
+        }
+
+        /// <summary>DEBUG 模式切换通知 (UI 线程触发)。</summary>
+        public static event Action<bool>? DebugModeChanged;
+
+        public static void SetDebugMode(bool on)
+        {
+            if (Current.DebugMode == on) return;
+            Current.DebugMode = on;
+            Save();
+            DebugModeChanged?.Invoke(on);
         }
 
         private static Settings? _cache;

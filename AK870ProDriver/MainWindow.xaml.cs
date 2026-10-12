@@ -19,6 +19,8 @@ namespace Ak870Pro
             AppWindow.Resize(new Windows.Graphics.SizeInt32(1180, 760));
             Nav.SelectedItem = Nav.MenuItems[0];
             Services.ToastService.Attach(ToastBorder, ToastText);
+            ApplyDebugVisibility();
+            Services.SettingsService.DebugModeChanged += _ => DispatcherQueue.TryEnqueue(ApplyDebugVisibility);
             Services.AppState.StateChanged += s => DispatcherQueue.TryEnqueue(() =>
             {
                 UpdateStatus();
@@ -50,6 +52,7 @@ namespace Ak870Pro
                         "keys" => new KeysPage(),
                         "macro" => new MacroPage(),
                         "log" => new LogPage(),
+                        "settings" => new SettingsPage(),
                         _ => null
                     };
                 }
@@ -59,6 +62,15 @@ namespace Ak870Pro
                 App.Log($"导航页面构造失败: {ex}");
                 Services.AppLog.Log($"页面加载失败: {ex.Message}");
             }
+        }
+
+        /// <summary>DEBUG 模式控制协议日志页可见性; 关闭时若正停留在该页则切回主页。</summary>
+        private void ApplyDebugVisibility()
+        {
+            bool on = Services.SettingsService.Current.DebugMode;
+            LogNavItem.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
+            if (!on && Nav.SelectedItem is NavigationViewItem sel && ReferenceEquals(sel, LogNavItem))
+                Nav.SelectedItem = Nav.MenuItems[0];
         }
 
         private void UpdateStatus()
