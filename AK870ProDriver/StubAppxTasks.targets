@@ -1,0 +1,30 @@
+<Project>
+
+  <!--
+    构建环境补丁: 本机 VS Build Tools 未安装 "MSIX 打包工具" 组件, 而 WindowsAppSDK 1.6
+    的 MrtCore.PriGen.targets 引用 VS 私有的 AppxPackage MSBuild 任务 DLL。
+    本应用为 unpackaged 且无 MRT 本地化资源, PRI/打包输出组非必需。
+    BuildTasks\Ak870BuildTasksStub.dll 是同名任务的透传 stub
+    (源码见 BuildStub.cs, 由 MSBuild 自带 Roslyn csc 编译)。
+    本文件在 Microsoft.Common.CurrentVersion.targets 之前导入 (csproj 注入
+    CustomBeforeMicrosoftCommonTargets), MSBuild 同名任务先注册优先, 从而覆盖 NuGet targets。
+  -->
+
+  <UsingTask TaskName="Microsoft.Build.AppxPackage.ExpandPayloadDirectories"
+             AssemblyFile="$(MSBuildThisFileDirectory)BuildTasks\Ak870BuildTasksStub.dll" />
+  <UsingTask TaskName="Microsoft.Build.AppxPackage.RemovePayloadDuplicates"
+             AssemblyFile="$(MSBuildThisFileDirectory)BuildTasks\Ak870BuildTasksStub.dll" />
+  <UsingTask TaskName="Microsoft.Build.AppxPackage.GetSdkFileFullPath"
+             AssemblyFile="$(MSBuildThisFileDirectory)BuildTasks\Ak870BuildTasksStub.dll" />
+  <UsingTask TaskName="Microsoft.Build.AppxPackage.GetSdkPropertyValue"
+             AssemblyFile="$(MSBuildThisFileDirectory)BuildTasks\Ak870BuildTasksStub.dll" />
+  <UsingTask TaskName="Microsoft.Build.AppxPackage.GetPackageArchitecture"
+             AssemblyFile="$(MSBuildThisFileDirectory)BuildTasks\Ak870BuildTasksStub.dll" />
+  <UsingTask TaskName="Microsoft.Build.AppxPackage.GetDefaultResourceLanguage"
+             AssemblyFile="$(MSBuildThisFileDirectory)BuildTasks\Ak870BuildTasksStub.dll" />
+  <UsingTask TaskName="Microsoft.Build.AppxPackage.ValidateConfiguration"
+             AssemblyFile="$(MSBuildThisFileDirectory)BuildTasks\Ak870BuildTasksStub.dll" />
+  <UsingTask TaskName="Microsoft.Build.Packaging.Pri.Tasks.ExpandPriContent"
+             AssemblyFile="$(MSBuildThisFileDirectory)BuildTasks\Ak870BuildTasksStub.dll" />
+
+</Project>

@@ -1,0 +1,68 @@
+<Page
+    x:Class="Ak870Pro.Views.KeysPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="Transparent">
+    <Grid Padding="24,20" RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Spacing="8">
+            <TextBlock Text="按键设置 (04 23 / 04 20)" FontSize="28" FontWeight="SemiBold"/>
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <RadioButton x:Name="ModeRgb" Content="自定义 RGB 逐键颜色" IsChecked="True"/>
+                <RadioButton x:Name="ModeUser" Content="用户灯光 (单色开关)"/>
+            </StackPanel>
+        </StackPanel>
+
+        <Grid Grid.Row="1" ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="300"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 键盘布局 -->
+            <Border Grid.Column="0" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                    CornerRadius="8" Padding="8">
+                <Viewbox Stretch="Uniform">
+                    <Canvas x:Name="KeyCanvas" Width="760" Height="420"/>
+                </Viewbox>
+            </Border>
+
+            <!-- 编辑面板 -->
+            <Border Grid.Column="1" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                    CornerRadius="8" Padding="16">
+                <StackPanel Spacing="12">
+                    <TextBlock x:Name="SelKeyText" Text="未选择按键" FontWeight="SemiBold"/>
+
+                    <TextBlock Text="红色 R" FontSize="12"/>
+                    <Slider x:Name="RSlider" Minimum="0" Maximum="255" Value="255"/>
+                    <TextBlock Text="绿色 G" FontSize="12"/>
+                    <Slider x:Name="GSlider" Minimum="0" Maximum="255" Value="0"/>
+                    <TextBlock Text="蓝色 B" FontSize="12"/>
+                    <Slider x:Name="BSlider" Minimum="0" Maximum="255" Value="0"/>
+
+                    <Border x:Name="ColorPreview" Height="36" CornerRadius="6" Background="Red"/>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="设置此键" Click="SetKey_Click"/>
+                        <Button Content="清除此键" Click="ClearKey_Click"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="全部清空" Click="ClearAll_Click"/>
+                        <Button Content="填充当前色" Click="FillAll_Click"/>
+                    </StackPanel>
+
+                    <Button x:Name="ApplyBtn" Content="应用到键盘" Click="Apply_Click"
+                            Style="{ThemeResource AccentButtonStyle}" HorizontalAlignment="Stretch"/>
+                    <TextBlock Text="应用 = 清除方案(0x80) + 04 23 上传 576B 槽位数据流。"
+                               FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Page>

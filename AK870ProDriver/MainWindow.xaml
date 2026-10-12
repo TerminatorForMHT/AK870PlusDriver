@@ -1,0 +1,57 @@
+<Window
+    x:Class="Ak870Pro.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="AK870 Plus 键盘驱动">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 自绘标题栏 (融入 Mica) -->
+        <Grid x:Name="AppTitleBar" Grid.Row="0" Height="48">
+            <TextBlock Text="AK870 Plus 键盘驱动"
+                       VerticalAlignment="Center" Margin="16,0,0,0"
+                       FontSize="13" FontWeight="SemiBold"
+                       Style="{ThemeResource CaptionTextBlockStyle}"/>
+        </Grid>
+
+        <NavigationView x:Name="Nav" Grid.Row="1"
+                        IsBackButtonVisible="Collapsed"
+                        IsSettingsVisible="False"
+                        PaneDisplayMode="Left"
+                        IsPaneOpen="True"
+                        OpenPaneLength="170"
+                        SelectionChanged="Nav_SelectionChanged">
+            <NavigationView.MenuItems>
+                <NavigationViewItem Content="主页" Tag="home" Icon="Home" />
+                <NavigationViewItem Content="灯光" Tag="light">
+                    <NavigationViewItem.Icon><FontIcon Glyph="&#xE790;"/></NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="按键" Tag="keys">
+                    <NavigationViewItem.Icon><FontIcon Glyph="&#xE765;"/></NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="宏" Tag="macro">
+                    <NavigationViewItem.Icon><FontIcon Glyph="&#xE943;"/></NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="协议日志" Tag="log">
+                    <NavigationViewItem.Icon><FontIcon Glyph="&#xE9F9;"/></NavigationViewItem.Icon>
+                </NavigationViewItem>
+            </NavigationView.MenuItems>
+            <NavigationView.FooterMenuItems>
+                <NavigationViewItem IsEnabled="False">
+                    <TextBlock x:Name="StatusText" Text="未连接" Margin="4,0" VerticalAlignment="Center"/>
+                </NavigationViewItem>
+            </NavigationView.FooterMenuItems>
+            <Frame x:Name="ContentFrame" />
+        </NavigationView>
+
+        <!-- 顶部浮窗提示层 -->
+        <Border x:Name="ToastBorder" Grid.RowSpan="2" IsHitTestVisible="False"
+                VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,60,0,0"
+                Padding="14,8" CornerRadius="6" Visibility="Collapsed">
+            <TextBlock x:Name="ToastText" Foreground="White" FontSize="14"/>
+        </Border>
+    </Grid>
+</Window>

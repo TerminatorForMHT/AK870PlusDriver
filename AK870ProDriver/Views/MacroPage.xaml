@@ -1,0 +1,31 @@
+<Page
+    x:Class="Ak870Pro.Views.MacroPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="Transparent">
+    <ScrollViewer Padding="24,20">
+        <StackPanel Spacing="16" MaxWidth="860" HorizontalAlignment="Left">
+            <TextBlock Text="宏管理器" FontSize="28" FontWeight="SemiBold"/>
+
+            <InfoBar Severity="Warning" Title="宏上传暂未启用" IsOpen="True" IsClosable="False"
+                     Message="键盘端宏下发格式 (04 19 + 0xE00 事件流, 0xB0/0x30/0x90/0x50 标志) 已从反汇编部分还原，待实机抓包验证后启用上传。当前版本宏保存在本地。"/>
+
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                    CornerRadius="8" Padding="16">
+                <StackPanel Spacing="12">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBox x:Name="NewNameBox" PlaceholderText="新宏名称" Width="200"/>
+                        <Button Content="新建" Click="Add_Click"/>
+                        <Button Content="删除" Click="Delete_Click"/>
+                        <Button Content="保存到本地" Click="Save_Click"/>
+                    </StackPanel>
+                    <ListView x:Name="MacroList" Height="140" SelectionMode="Single"/>
+                    <TextBlock Text="按键序列 (每行: 按键,延时ms)" FontWeight="SemiBold"/>
+                    <TextBox x:Name="StepsBox" AcceptsReturn="True" Height="220" TextWrapping="NoWrap"
+                             PlaceholderText="例如:&#x0A;A,50&#x0A;B,50&#x0A;LCtrl,10&#x0A;C,30"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

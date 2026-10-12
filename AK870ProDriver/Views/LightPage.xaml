@@ -1,0 +1,53 @@
+<Page
+    x:Class="Ak870Pro.Views.LightPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="Transparent">
+    <ScrollViewer Padding="24,20">
+        <StackPanel Spacing="16" MaxWidth="860" HorizontalAlignment="Left">
+
+            <TextBlock Text="灯光" FontSize="28" FontWeight="SemiBold"/>
+
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                    CornerRadius="8" Padding="16">
+                <StackPanel Spacing="14">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="灯效模式:" VerticalAlignment="Center" Width="80"/>
+                        <ComboBox x:Name="ModeCombo" Width="220"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="灯光亮度:" VerticalAlignment="Center" Width="80"/>
+                        <Slider x:Name="BrightSlider" Minimum="0" Maximum="5" Value="5" Width="220"/>
+                        <TextBlock x:Name="BrightText" Text="5" VerticalAlignment="Center" Width="20"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="灯光速度:" VerticalAlignment="Center" Width="80"/>
+                        <Slider x:Name="SpeedSlider" Minimum="0" Maximum="5" Value="3" Width="220"/>
+                        <TextBlock x:Name="SpeedText" Text="3" VerticalAlignment="Center" Width="20"/>
+                    </StackPanel>
+                    <Button x:Name="ApplyBtn" Content="应用" Click="Apply_Click" Style="{ThemeResource AccentButtonStyle}" HorizontalAlignment="Left"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 音乐律动: 键盘固件本地拾音, PC 仅下发显示模式 (05 01 帧 / 0x434FE0 实锤) -->
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                    CornerRadius="8" Padding="16">
+                <StackPanel Spacing="14">
+                    <TextBlock Text="音乐律动" FontSize="18" FontWeight="SemiBold"/>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="显示模式:" VerticalAlignment="Center" Width="80"/>
+                        <ComboBox x:Name="MusicCombo" Width="220" SelectedIndex="0"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button x:Name="MusicBtn" Content="开启律动" Click="Music_Click" Style="{ThemeResource AccentButtonStyle}"/>
+                        <Button x:Name="MusicStopBtn" Content="停止律动" Click="MusicStop_Click"/>
+                    </StackPanel>
+                    <TextBlock Text="键盘内置麦克风本地拾音；选择模式后点“开启律动”，停止请在上方切换普通灯效或点“停止律动”。"
+                               Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

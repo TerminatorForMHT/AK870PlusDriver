@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.22621.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <RootNamespace>Ak870Pro</RootNamespace>
+    <AssemblyName>Ak870ProDriver</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <UseWinUI>true</UseWinUI>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <DefaultLanguage>zh-CN</DefaultLanguage>
+    <!-- 本应用无 MRT 本地化/图片资源，跳过 PRI 生成 (无需 VS MSIX 打包组件) -->
+    <AppxGeneratePriEnabled>false</AppxGeneratePriEnabled>
+    <AppxGeneratePrisForPortableLibrariesEnabled>false</AppxGeneratePrisForPortableLibrariesEnabled>
+    <IncludeProjectPriFile>false</IncludeProjectPriFile>
+    <IncludeCopyLocalFilesOutputGroup>false</IncludeCopyLocalFilesOutputGroup>
+  </PropertyGroup>
+
+  <!--
+    构建环境补丁: VS Build Tools 若缺少 "MSIX 打包工具" 组件, WindowsAppSDK 1.6 的 PRI/打包
+    targets 会引用不存在的 AppxPackage 任务 DLL。在 Common.targets 之前注入同名内联 stub
+    任务 (MSBuild 同名任务先注册优先)。完整 VS 环境下自动跳过。
+  -->
+  <PropertyGroup Condition="!Exists('$(VsInstallRoot)\MSBuild\Microsoft\VisualStudio\v17.0\AppxPackage\Microsoft.Build.AppxPackage.dll')">
+    <CustomBeforeMicrosoftCommonTargets>$(CustomBeforeMicrosoftCommonTargets);$(MSBuildThisFileDirectory)StubAppxTasks.targets</CustomBeforeMicrosoftCommonTargets>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.240923002" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- BuildTasks\ 存放 MSBuild stub (BuildStub.cs + 预编译 DLL), 不属于应用源码 -->
+    <Compile Remove="BuildTasks\**" />
+    <None Include="BuildTasks\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\Layouts\rgb-keyboard.xml" CopyToOutputDirectory="PreserveNewest" />
+    <!-- MRT Core 启动必需; 由 makepri 生成 (Windows Kits\10\bin\10.0.22621.0\x64\makepri.exe new /pr . /cf priconfig.xml /in Ak870Pro) -->
+    <Content Include="resources.pri" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\app.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\app_256.png" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\app_32.png" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+  </PropertyGroup>
+
+</Project>

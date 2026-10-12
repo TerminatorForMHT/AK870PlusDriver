@@ -1,0 +1,37 @@
+<Page
+    x:Class="Ak870Pro.Views.LogPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="Transparent">
+    <Grid Padding="24,20" RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="协议日志" FontSize="28" FontWeight="SemiBold"/>
+
+        <Border Grid.Row="1" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                CornerRadius="8" Padding="12">
+            <StackPanel Spacing="8">
+                <TextBlock Text="原始发送 (65 字节 Feature Report, hex; 不足自动补 00)" FontWeight="SemiBold" FontSize="13"/>
+                <TextBox x:Name="RawBox" PlaceholderText="04 18  /  04 72 01 00 0B 05 03" FontFamily="Consolas" IsSpellCheckEnabled="False"/>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button x:Name="SendBtn" Content="发送(带应答)" Click="Send_Click" Style="{ThemeResource AccentButtonStyle}"/>
+                    <Button x:Name="SendNoRespBtn" Content="发送(无应答)" Click="SendNoResp_Click"/>
+                    <Button Content="清空日志" Click="Clear_Click"/>
+                    <Button Content="保存日志" Click="SaveLog_Click"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="2" Background="#1B1B1B" CornerRadius="8" Padding="8">
+            <ScrollViewer x:Name="LogScroll" VerticalScrollBarVisibility="Auto">
+                <TextBlock x:Name="LogText" FontFamily="Consolas" FontSize="12" TextWrapping="NoWrap"
+                           Foreground="#D6D6D6" IsTextSelectionEnabled="True"/>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</Page>

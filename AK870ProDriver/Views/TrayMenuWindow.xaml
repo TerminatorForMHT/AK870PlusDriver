@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window x:Class="Ak870Pro.Views.TrayMenuWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- 1x1 锚点窗口: 仅用于承载 WinUI3 MenuFlyout, 弹出在鼠标光标处 -->
+    <Border x:Name="Anchor" Width="1" Height="1" Background="Transparent"/>
+</Window>
