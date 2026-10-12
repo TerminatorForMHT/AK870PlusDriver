@@ -87,7 +87,7 @@
                         </StackPanel>
                         <Button x:Name="RemapUploadBtn" Content="上传改键配置" Click="RemapUpload_Click"
                                 Style="{ThemeResource AccentButtonStyle}" HorizontalAlignment="Stretch"/>
-                        <TextBlock Text="上传 = 04 11 + 576B 改键表 (144槽×4B, 槽号=key_index)。改键对键盘全局生效 (含 Fn 层之外的普通层)。"
+                        <TextBlock Text="编辑的是主页「我的专属配置」当前选中的方案；上传 = 04 11 + 576B 改键表 (144槽×4B, 槽号=key_index)。改键对键盘全局生效。"
                                    FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap"/>
                     </StackPanel>
                 </StackPanel>

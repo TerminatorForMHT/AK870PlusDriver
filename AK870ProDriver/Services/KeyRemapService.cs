@@ -18,6 +18,44 @@ namespace Ak870Pro.Services
         public bool IsEmpty => Kind == RemapKind.Default && Usage == 0 && Mod == 0;
     }
 
+    /// <summary>专属配置方案: PC 端方案管理 (对齐官方"我的专属配置"), 应用时上传改键表到键盘。</summary>
+    public sealed class RemapProfile
+    {
+        public string Id { get; set; } = Guid.NewGuid().ToString("N");
+        public string Name { get; set; } = "未命名配置";
+        public List<RemapEntry> Entries { get; set; } = new();
+
+        /// <summary>导出/导入文件格式 (独立于持久化, version 便于将来扩展)。</summary>
+        public string ToJson() =>
+            System.Text.Json.JsonSerializer.Serialize(new
+            {
+                version = 1,
+                name = Name,
+                entries = Entries.Select(e => new { slot = e.Slot, kind = (int)e.Kind, usage = e.Usage, mod = e.Mod })
+            }, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+
+        public static RemapProfile? FromJson(string json)
+        {
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(json);
+                var root = doc.RootElement;
+                var p = new RemapProfile { Name = root.TryGetProperty("name", out var n) ? n.GetString() ?? "导入配置" : "导入配置" };
+                if (root.TryGetProperty("entries", out var arr))
+                    foreach (var e in arr.EnumerateArray())
+                        p.Entries.Add(new RemapEntry
+                        {
+                            Slot = e.GetProperty("slot").GetInt32(),
+                            Kind = (RemapKind)e.GetProperty("kind").GetInt32(),
+                            Usage = e.GetProperty("usage").GetByte(),
+                            Mod = e.GetProperty("mod").GetByte()
+                        });
+                return p;
+            }
+            catch { return null; }
+        }
+    }
+
     /// <summary>
     /// 专属配置改键表编码 — 官方 0x418590 组包逻辑还原:
     /// 576B = 144 槽 × 4B, 槽号 = key_index; 记录: 默认 [05 03 00 00], 禁用/未设置 [00 00 00 00],

@@ -28,8 +28,26 @@ namespace Ak870Pro.Services
             public int RespondLevel { get; set; } = 3;
             // DEBUG 模式: 控制协议日志页可见性 (设置页连点 7 次版本号切换)
             public bool DebugMode { get; set; }
-            // 专属配置改键 (按键页)
+            // 专属配置方案 (主页管理, 按键页编辑当前方案)
+            public List<RemapProfile> RemapProfiles { get; set; } = new();
+            public string CurrentProfileId { get; set; } = "";
+            // 旧字段 (单表) 保留兼容旧 settings.json, 不再使用
             public List<RemapEntry> KeyRemaps { get; set; } = new();
+        }
+
+        /// <summary>当前方案 (无则创建默认方案)。</summary>
+        public static RemapProfile CurrentProfile
+        {
+            get
+            {
+                var s = Current;
+                if (s.RemapProfiles.Count == 0)
+                    s.RemapProfiles.Add(new RemapProfile { Name = "默认配置" });
+                var p = s.RemapProfiles.FirstOrDefault(x => x.Id == s.CurrentProfileId)
+                        ?? s.RemapProfiles[0];
+                s.CurrentProfileId = p.Id;
+                return p;
+            }
         }
 
         /// <summary>DEBUG 模式切换通知 (UI 线程触发)。</summary>

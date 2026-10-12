@@ -23,7 +23,29 @@
                 </StackPanel>
             </Border>
 
-            <!-- 层选择 -->
+            <!-- 专属配置 -->
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                    CornerRadius="8" Padding="16">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="我的专属配置 (04 11 改键)" FontSize="16" FontWeight="SemiBold"/>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ComboBox x:Name="ProfileCombo" MinWidth="220"/>
+                        <Button x:Name="ProfileApplyBtn" Content="应用到键盘" Click="ProfileApply_Click" Style="{ThemeResource AccentButtonStyle}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="新建" Click="ProfileNew_Click"/>
+                        <Button Content="重命名" Click="ProfileRename_Click"/>
+                        <Button Content="删除" Click="ProfileDelete_Click"/>
+                        <Button Content="导入" Click="ProfileImport_Click"/>
+                        <Button Content="导出" Click="ProfileExport_Click"/>
+                    </StackPanel>
+                    <TextBlock Text="方案保存在本机，点击「应用到键盘」把该方案的改键表 (576B, 144槽×4B) 上传到键盘生效；改键内容在「按键 → 专属配置改键」中编辑。"
+                               TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 键盘硬件层 -->
             <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
                     CornerRadius="8" Padding="16">
@@ -34,6 +56,8 @@
                         <Button x:Name="Layer2Btn" Content="层 2" Click="Layer_Click" Tag="2"/>
                         <Button x:Name="Layer3Btn" Content="层 3" Click="Layer_Click" Tag="3"/>
                     </StackPanel>
+                    <TextBlock Text="键盘固件的 3 个硬件槽：灯效方案按层存储（灯光页自定义方案上传时指定层号），此处切换键盘当前激活的层。"
+                               TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 </StackPanel>
             </Border>
         </StackPanel>

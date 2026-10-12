@@ -37,7 +37,7 @@ namespace Ak870Pro.Views
             foreach (var k in AppState.Keys.OrderBy(k => k.KeyIndex))
                 TargetKeyCombo.Items.Add(new ComboBoxItem { Content = $"{k.Name}  (0x{k.Code:X2})", Tag = k.Code });
             _remaps.Clear();
-            foreach (var e in SettingsService.Current.KeyRemaps) _remaps[e.Slot] = e;
+            foreach (var e in SettingsService.CurrentProfile.Entries) _remaps[e.Slot] = e;
             // 事件一律构造/回填完成后挂接, 避免 InitializeComponent 期间同步触发访问未就绪控件
             RemapKindCombo.SelectionChanged += (_, _) => UpdateRemapEditorVisibility();
             UpdateRemapEditorVisibility();
@@ -76,7 +76,8 @@ namespace Ak870Pro.Views
 
         private void PersistRemaps()
         {
-            SettingsService.Current.KeyRemaps = KeyRemapService.Normalize(_remaps.Values);
+            var p = SettingsService.CurrentProfile;
+            p.Entries = KeyRemapService.Normalize(_remaps.Values);
             SettingsService.Save();
         }
 
