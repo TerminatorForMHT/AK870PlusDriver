@@ -4,7 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Background="Transparent">
     <ScrollViewer Padding="24,20">
-        <StackPanel Spacing="16" MaxWidth="860" HorizontalAlignment="Left">
+        <StackPanel Spacing="16" MaxWidth="1200" HorizontalAlignment="Center">
 
             <TextBlock Text="设置" FontSize="28" FontWeight="SemiBold"/>
 
@@ -17,13 +17,6 @@
                     <CheckBox x:Name="FnWinKey" Content="禁用 Window 键"/>
                     <CheckBox x:Name="FnAltF4" Content="禁用 ALT + F4"/>
                     <CheckBox x:Name="FnAltTab" Content="禁用 ALT + TAB"/>
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <TextBlock Text="fn_switch:" VerticalAlignment="Center"/>
-                        <NumberBox x:Name="FnSwitch" Value="0" Minimum="0" Maximum="255" SpinButtonPlacementMode="Compact" Width="120"/>
-                        <TextBlock Text="协议保留字段 (设置包 [5]), 官方无可见控件, 从配置存储读取; 通常保持 0"
-                                   VerticalAlignment="Center" FontSize="12"
-                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
-                    </StackPanel>
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <TextBlock Text="键盘休眠:" VerticalAlignment="Center"/>
                         <ComboBox x:Name="SleepCombo" SelectedIndex="0" Width="140">
@@ -38,6 +31,7 @@
                         <Slider x:Name="RespondSlider" Minimum="1" Maximum="5" Value="3" Width="200"/>
                         <TextBlock x:Name="RespondText" Text="3 档" VerticalAlignment="Center"/>
                     </StackPanel>
+                    <ToggleSwitch x:Name="AutoStartToggle" Header="开机自启动" Toggled="AutoStart_Toggled"/>
                     <Button x:Name="ApplySettingsBtn" Content="应用设置" Click="ApplySettings_Click" Style="{ThemeResource AccentButtonStyle}" HorizontalAlignment="Left"/>
                     <TextBlock Text="注: 有线约2-3ms/2.4G约5-6ms/蓝牙约12-13ms(一档)，延迟过低可能引起连击。"
                                Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap"/>

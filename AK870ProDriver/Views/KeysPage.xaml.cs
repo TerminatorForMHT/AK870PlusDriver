@@ -46,10 +46,16 @@ namespace Ak870Pro.Views
 
         private void UpdateRemapEditorVisibility()
         {
-            bool isKey = RemapKindCombo.SelectedIndex == (int)RemapKind.Key;
-            var vis = isKey ? Visibility.Visible : Visibility.Collapsed;
-            TargetKeyLabel.Visibility = TargetKeyCombo.Visibility = ModLabel.Visibility = vis;
-            ModCtrl.Visibility = ModShift.Visibility = ModAlt.Visibility = ModWin.Visibility = vis;
+            var kind = (RemapKind)Math.Max(0, RemapKindCombo.SelectedIndex);
+            bool key = kind == RemapKind.Key, mouse = kind == RemapKind.Mouse,
+                 media = kind == RemapKind.Media, win = kind == RemapKind.WinShortcut;
+            TargetKeyLabel.Visibility = TargetKeyCombo.Visibility = ModLabel.Visibility =
+                key ? Visibility.Visible : Visibility.Collapsed;
+            ModCtrl.Visibility = ModShift.Visibility = ModAlt.Visibility = ModWin.Visibility =
+                key ? Visibility.Visible : Visibility.Collapsed;
+            MouseLabel.Visibility = MouseCombo.Visibility = mouse ? Visibility.Visible : Visibility.Collapsed;
+            MediaLabel.Visibility = MediaCombo.Visibility = media ? Visibility.Visible : Visibility.Collapsed;
+            WinLabel.Visibility = WinCombo.Visibility = win ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void LoadRemapEditor(KeyInfo k)
@@ -66,6 +72,12 @@ namespace Ak870Pro.Views
                     ModAlt.IsChecked = (e.Mod & 4) != 0;
                     ModWin.IsChecked = (e.Mod & 8) != 0;
                 }
+                else if (e.Kind == RemapKind.WinShortcut)
+                    WinCombo.SelectedIndex = e.Usage == 10 ? 8 : e.Usage - 1; // 重启 param=10
+                else if (e.Kind == RemapKind.Mouse)
+                    MouseCombo.SelectedIndex = Math.Clamp(e.Usage - 1, 0, MouseCombo.Items.Count - 1);
+                else if (e.Kind == RemapKind.Media)
+                    MediaCombo.SelectedIndex = Math.Clamp(e.Usage - 1, 0, MediaCombo.Items.Count - 1);
             }
             else
             {
@@ -86,14 +98,28 @@ namespace Ak870Pro.Views
             if (_selected == null) { Show(false, "请先点击一个按键"); return; }
             var kind = (RemapKind)Math.Max(0, RemapKindCombo.SelectedIndex);
             byte usage = 0, mod = 0;
-            if (kind == RemapKind.Key)
+            switch (kind)
             {
-                if (TargetKeyCombo.SelectedItem is ComboBoxItem it && it.Tag is int code) usage = (byte)code;
-                else { Show(false, "请选择目标键"); return; }
-                if (ModCtrl.IsChecked == true) mod |= 1;
-                if (ModShift.IsChecked == true) mod |= 2;
-                if (ModAlt.IsChecked == true) mod |= 4;
-                if (ModWin.IsChecked == true) mod |= 8;
+                case RemapKind.Key:
+                    if (TargetKeyCombo.SelectedItem is ComboBoxItem kit && kit.Tag is int code) usage = (byte)code;
+                    else { Show(false, "请选择目标键"); return; }
+                    if (ModCtrl.IsChecked == true) mod |= 1;
+                    if (ModShift.IsChecked == true) mod |= 2;
+                    if (ModAlt.IsChecked == true) mod |= 4;
+                    if (ModWin.IsChecked == true) mod |= 8;
+                    break;
+                case RemapKind.Mouse:
+                    if (MouseCombo.SelectedIndex < 0) { Show(false, "请选择鼠标动作"); return; }
+                    usage = (byte)(MouseCombo.SelectedIndex + 1);
+                    break;
+                case RemapKind.Media:
+                    if (MediaCombo.SelectedIndex < 0) { Show(false, "请选择多媒体动作"); return; }
+                    usage = (byte)(MediaCombo.SelectedIndex + 1);
+                    break;
+                case RemapKind.WinShortcut:
+                    if (WinCombo.SelectedIndex < 0) { Show(false, "请选择快捷方式"); return; }
+                    usage = (byte)(WinCombo.SelectedIndex == 8 ? 10 : WinCombo.SelectedIndex + 1); // 重启 param=10
+                    break;
             }
             _remaps[_selected.KeyIndex] = new RemapEntry { Slot = _selected.KeyIndex, Kind = kind, Usage = usage, Mod = mod };
             PersistRemaps();

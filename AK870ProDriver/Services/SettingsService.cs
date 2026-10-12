@@ -23,7 +23,6 @@ namespace Ak870Pro.Services
             public bool FnAltF4 { get; set; }
             public bool FnAltTab { get; set; }
             public bool FnWinKey { get; set; }
-            public int FnSwitch { get; set; }
             public int SleepIndex { get; set; }
             public int RespondLevel { get; set; } = 3;
             // DEBUG 模式: 控制协议日志页可见性 (设置页连点 7 次版本号切换)

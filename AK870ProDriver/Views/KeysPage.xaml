@@ -71,6 +71,9 @@
                             <ComboBoxItem Content="默认 (透传)"/>
                             <ComboBoxItem Content="禁用"/>
                             <ComboBoxItem Content="映射为按键"/>
+                            <ComboBoxItem Content="鼠标功能"/>
+                            <ComboBoxItem Content="多媒体"/>
+                            <ComboBoxItem Content="Windows快捷方式"/>
                         </ComboBox>
                         <TextBlock x:Name="TargetKeyLabel" Text="目标键" FontSize="12"/>
                         <ComboBox x:Name="TargetKeyCombo" HorizontalAlignment="Stretch"/>
@@ -81,6 +84,39 @@
                             <CheckBox x:Name="ModAlt" Content="Alt" MinWidth="0"/>
                             <CheckBox x:Name="ModWin" Content="Win" MinWidth="0"/>
                         </StackPanel>
+                        <TextBlock x:Name="MouseLabel" Text="鼠标动作" FontSize="12" Visibility="Collapsed"/>
+                        <ComboBox x:Name="MouseCombo" HorizontalAlignment="Stretch" Visibility="Collapsed">
+                            <ComboBoxItem Content="左键单击"/>
+                            <ComboBoxItem Content="中键单击"/>
+                            <ComboBoxItem Content="右键单击"/>
+                            <ComboBoxItem Content="双击"/>
+                            <ComboBoxItem Content="向上滚动"/>
+                            <ComboBoxItem Content="向下滚动"/>
+                            <ComboBoxItem Content="鼠标按钮 4"/>
+                            <ComboBoxItem Content="鼠标按钮 5"/>
+                        </ComboBox>
+                        <TextBlock x:Name="MediaLabel" Text="多媒体动作" FontSize="12" Visibility="Collapsed"/>
+                        <ComboBox x:Name="MediaCombo" HorizontalAlignment="Stretch" Visibility="Collapsed">
+                            <ComboBoxItem Content="播放 / 暂停"/>
+                            <ComboBoxItem Content="下一首"/>
+                            <ComboBoxItem Content="上一首"/>
+                            <ComboBoxItem Content="停止"/>
+                            <ComboBoxItem Content="音量 +"/>
+                            <ComboBoxItem Content="音量 −"/>
+                            <ComboBoxItem Content="静音"/>
+                        </ComboBox>
+                        <TextBlock x:Name="WinLabel" Text="快捷方式" FontSize="12" Visibility="Collapsed"/>
+                        <ComboBox x:Name="WinCombo" HorizontalAlignment="Stretch" Visibility="Collapsed">
+                            <ComboBoxItem Content="显示桌面"/>
+                            <ComboBoxItem Content="我的电脑"/>
+                            <ComboBoxItem Content="锁定计算机"/>
+                            <ComboBoxItem Content="关闭窗口"/>
+                            <ComboBoxItem Content="切换 Windows"/>
+                            <ComboBoxItem Content="注销"/>
+                            <ComboBoxItem Content="睡眠"/>
+                            <ComboBoxItem Content="关机"/>
+                            <ComboBoxItem Content="重启"/>
+                        </ComboBox>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <Button Content="写入此键" Click="RemapSet_Click"/>
                             <Button Content="恢复默认" Click="RemapClear_Click"/>

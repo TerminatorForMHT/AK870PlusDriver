@@ -340,10 +340,10 @@ namespace Ak870Pro.Services
         /// 设置包复选框实锤 (0x4140A7-0x4140D6 GetCheck 顺序 ↔ 对话框 0x4455xx lan ID):
         ///   payload[2]=禁用ALT+TAB ([edi+0x678], lan 162), payload[3]=禁用ALT+F4 ([edi+0x67c], lan 161),
         ///   payload[4]=禁用Window键 ([edi+0x680], lan 160)。
-        /// payload[5]=fn_switch, payload[6]=sleep_time, payload[7]=0, payload[8]=key_respondtime。
+        /// payload[5]=fn_switch (官方无 UI, 恒发 0), payload[6]=sleep_time, payload[7]=0, payload[8]=key_respondtime。
         /// 注意官方此序列**没有 04 F0**。
         /// </summary>
-        public async Task<bool> ApplySettingsAsync(bool disAltTab, bool disAltF4, bool disWinKey, int fnSwitch, int sleepTime, int respondTime)
+        public async Task<bool> ApplySettingsAsync(bool disAltTab, bool disAltF4, bool disWinKey, int sleepTime, int respondTime)
         {
             return await Task.Run(() =>
             {
@@ -356,7 +356,7 @@ namespace Ak870Pro.Services
                 b[2] = (byte)(disAltTab ? 1 : 0);   // 禁用ALT+TAB  [0x678] lan 162
                 b[3] = (byte)(disAltF4 ? 1 : 0);    // 禁用ALT+F4   [0x67c] lan 161
                 b[4] = (byte)(disWinKey ? 1 : 0);   // 禁用Window键 [0x680] lan 160
-                b[5] = (byte)fnSwitch;          // "fn_switch" [0x4140F7-0x41412C]
+                b[5] = 0;                       // fn_switch (官方无 UI 控件, 固定 0)
                 b[6] = (byte)sleepTime;         // "sleep_time" [0x414139-0x41417E]
                 b[8] = (byte)respondTime;       // "key_respondtime" [0x41418B-0x4141D0] (buf[7]=0)
                 b[0x3E] = 0xAA; b[0x3F] = 0x55; // [0x4141D6: word 0x55AA]

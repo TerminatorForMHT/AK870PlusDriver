@@ -4,7 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Background="Transparent">
     <ScrollViewer Padding="24,20">
-        <StackPanel Spacing="16" MaxWidth="860" HorizontalAlignment="Left">
+        <StackPanel Spacing="16" MaxWidth="1200" HorizontalAlignment="Center">
 
             <TextBlock Text="灯光" FontSize="28" FontWeight="SemiBold"/>
 
