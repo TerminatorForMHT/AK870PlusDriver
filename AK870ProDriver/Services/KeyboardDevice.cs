@@ -456,10 +456,10 @@ namespace Ak870Pro.Services
         }
 
         /// <summary>
-        /// 2.4G 音乐律动数据帧 (官方 0x4330C0 栈帧实锤, 经 0x4501C0 发送 len=0x21):
-        ///   buf[0]=0x0b, buf[1]=0x1c, buf[2]=0, buf[3]=GetCurData(颜色)=foremode,
-        ///   buf[4]=GetCurData(副下拉), buf[5]=状态字节, buf[6..26]=21 列频谱高度。
-        ///   即 frame(RID槽) 偏移: frame[5]=foremode, frame[8..28]=21 列频谱。
+        /// 2.4G 音乐律动数据帧 (官方 0x4330C0 栈帧逐字节实锤, 经 0x4501C0 发送 len=0x21):
+        ///   buf 直接含 ReportID 槽: buf[0]=0, buf[1]=0x0b, buf[2]=0x1c, buf[3]=0,
+        ///   buf[4]=GetCurData(颜色)=foremode, buf[5]=GetCurData(副下拉), buf[6]=状态字节,
+        ///   buf[7..27]=21 列频谱高度, buf[32]=校验和 (0x4501C0 覆盖 buf[0..31] 求和)。
         /// 动画帧允许丢帧 → fire-and-forget (不做回显等待, 保持 33ms 节奏)。
         /// </summary>
         public Task<bool> SendMusicFrame24Async(byte[] heights21, int foremode)
@@ -468,9 +468,9 @@ namespace Ak870Pro.Services
             {
                 if (_channel == null || _channel.Kind != ChannelKind.Report33) return false;
                 var frame = new byte[HidTransport.ReportFrameSize];
-                frame[1] = 0x0b; frame[2] = 0x1c;   // buf[0..1]
-                frame[5] = (byte)foremode;          // buf[3]=颜色模式下拉数据
-                Array.Copy(heights21, 0, frame, 8, Math.Min(AudioSpectrum.Columns, heights21.Length)); // buf[6..26]=21列频谱
+                frame[1] = 0x0b; frame[2] = 0x1c;   // buf[1..2]
+                frame[4] = (byte)foremode;          // buf[4]=颜色模式下拉数据
+                Array.Copy(heights21, 0, frame, 7, Math.Min(AudioSpectrum.Columns, heights21.Length)); // buf[7..27]=21列频谱
                 byte sum = 0;
                 for (int k = 1; k < 0x20; k++) sum += frame[k];
                 frame[0x20] = sum;
