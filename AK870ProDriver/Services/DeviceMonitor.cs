@@ -6,16 +6,16 @@ using Ak870Pro.Services;
 namespace Ak870Pro.Services
 {
     /// <summary>
-    /// 设备自动连接监视器 — 复刻官方驱动 DeviceDriver.exe 的连接机制:
+    /// 设备自动连接监视器:
     ///
-    ///   [0x4321C0 主窗口过程] WM_DEVICECHANGE(0x219, DBT_DEVICEARRIVAL/DBT_DEVICEREMOVECOMPLETE,
-    ///   DBT_DEVTYP_DEVICEINTERFACE=5) → [0x41FD80] → 事件入队 → 工作线程 → [0x41F690] 全量重扫 →
-    ///   [0x450640] 枚举+白名单+打开+分类 (Feature65 不握手 / 33/33 报告通道立即握手 0x450360)。
+    ///   WM_DEVICECHANGE(0x219, DBT_DEVICEARRIVAL/DBT_DEVICEREMOVECOMPLETE,
+    ///   DBT_DEVTYP_DEVICEINTERFACE=5) 事件入队 → 工作线程全量重扫 →
+    ///   枚举+白名单+打开+分类 (Feature65 不握手 / 33/33 报告通道立即握手)。
     ///
-    /// 官方行为: 无需用户选择连接模式, 设备插上即自动枚举、自动握手、自动就绪;
-    /// USB(接口路径含 MI_00) 与 2.4G(MI_03) 由 config.xml 设备表按路径自动判定。
-    /// 本实现: 子类化主窗口 HWND 接收 WM_DEVICECHANGE + RegisterDeviceNotification(HID 接口 GUID),
-    /// 到达/移除事件去抖后触发 全量重扫 (断开失效通道 → 自动重连)。
+    /// 行为: 无需用户选择连接模式, 设备插上即自动枚举、自动握手、自动就绪;
+    /// USB(接口路径含 MI_00) 与 2.4G(MI_03) 按路径自动判定。
+    /// 实现: 子类化主窗口 HWND 接收 WM_DEVICECHANGE + RegisterDeviceNotification(HID 接口 GUID),
+    /// 到达/移除事件去抖后触发全量重扫 (断开失效通道 → 自动重连)。
     /// </summary>
     public static class DeviceMonitor
     {
@@ -99,7 +99,7 @@ namespace Ak870Pro.Services
                 _debounce.IsRepeating = false;
                 _debounce.Tick += (_, _) => { _rescanQueued = false; _ = RescanAsync("设备变动"); };
 
-                // 兜底轮询: 官方仅靠设备事件重扫, 键盘无线休眠唤醒不产生 DEVICECHANGE,
+                // 兜底轮询: 仅靠设备事件重扫, 键盘无线休眠唤醒不产生 DEVICECHANGE,
                 // 因此未连接时每 3s 重扫一次 (已连接时 Tick 直接跳过, 零开销)。
                 _poll = window.DispatcherQueue.CreateTimer();
                 _poll.Interval = TimeSpan.FromSeconds(3);
@@ -131,7 +131,7 @@ namespace Ak870Pro.Services
                 int evt = (int)wParam;
                 if (evt == DBT_DEVICEARRIVAL || evt == DBT_DEVICEREMOVECOMPLETE)
                 {
-                    // dbch_devicetype @ +4 == DBT_DEVTYP_DEVICEINTERFACE (官方 0x432B50 只处理此类型)
+                    // dbch_devicetype @ +4 == DBT_DEVTYP_DEVICEINTERFACE (只处理此类型)
                     int devType = lParam != IntPtr.Zero ? Marshal.ReadInt32(lParam, 4) : 0;
                     if (devType == DBT_DEVTYP_DEVICEINTERFACE)
                     {
@@ -154,7 +154,7 @@ namespace Ak870Pro.Services
         }
 
         /// <summary>
-        /// 官方 0x41F690 全量重扫: 已连接时先确认通道是否仍存在 (移除则断开),
+        /// 全量重扫: 已连接时先确认通道是否仍存在 (移除则断开),
         /// 然后未连接即自动连接 (枚举 → 选通道 → 握手)。
         /// </summary>
         public static async Task RescanAsync(string reason)

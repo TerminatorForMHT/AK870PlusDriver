@@ -7,7 +7,7 @@ namespace Ak870Pro.Services
     public enum ConnState { Disconnected, Connecting, Connected }
 
     /// <summary>
-    /// AK870 PRO 协议层 — 命令序列与传输机制均来自对 DeviceDriver.exe 的反汇编确认。
+    /// AK870 PLUS 协议层 — 命令序列与传输机制, 覆盖 Feature65 + Report33 两种 HID 通道。
     ///
     /// 负载格式 (64 字节): payload[0]=类字节 (0x04=命令, 0x00=设置数据, 0x80=灯效方案数据),
     /// payload[1]=命令 ID, 其后为参数。
@@ -15,10 +15,10 @@ namespace Ak870Pro.Services
     /// 传输 (按通道类型自动选择):
     ///   报告通道 (33/33, usage FF60/0x61 — 2.4G 接收器实际配置通道):
     ///     帧(33B) = [0]=RID 槽(恒 0) + [1..0x20)=payload[0..0x1F) + 校验和@0x20 = sum(帧[1..0x20)) & 0xFF
-    ///     WriteFile(33B) 发送, 读应答剥 RID 后 resp[0..2]==payload[0..2], 重试 20x10ms [0x4501C0/0x451ED0]
-    ///     连接握手: payload=[02], 期待回显 02 00 00 [0x450360]
+    ///     WriteFile(33B) 发送, 读应答剥 RID 后 resp[0..2]==payload[0..2], 重试 20x10ms
+    ///     连接握手: payload=[02], 期待回显 02 00 00
     ///   Feature 通道 (FeatureReport=65 — USB 直连形态):
-    ///     SetFeature([RID=0] + payload 64B), GetFeature 应答 resp[4]==1 / 0xFF 忙 [0x44FC90/0x452010]
+    ///     SetFeature([RID=0] + payload 64B), GetFeature 应答 resp[4]==1 / 0xFF 忙
     ///
     /// 命令 (类字节 0x04): payload[1]=命令 ID
     ///   0x18 开始配置会话 | 0x02 应用 | 0xF0 结束 | 0x13 选层(packet[8]=层号)
@@ -26,12 +26,12 @@ namespace Ak870Pro.Services
     ///   0x72 自定义灯效方案上传入口 (packet[2]=方案模式, packet[8..9]=数据长度) — 仅上传方案用,
     ///        切换灯效走"灯效参数包" (见下)。
     ///
-    /// 灯效参数包 (切换灯效, 官方 0x42B400 / t_light_data 实锤): 类字节 = 模式号本身!
+    /// 灯效参数包 (切换灯效): 类字节 = 模式号本身!
     ///   payload[0]=协议 mode (1..19=灯效, 0=关闭背光; mode=0 时其余字段不填仅发 AA55)
-    ///   payload[1..4)=R,G,B | payload[8]=colorful(官方恒 1) | payload[9]=亮度 | payload[10]=速度
+    ///   payload[1..4)=R,G,B | payload[8]=colorful(恒 1) | payload[9]=亮度 | payload[10]=速度
     ///   payload[11]=方向 | payload[14]=0xAA | payload[15]=0x55
-    /// 官方灯光序列: 04 18(flag=1) → 04 13(packet[8]=1, flag=1) → 参数包(flag=0) → 04 02(flag=1) → 04 F0(flag=0)
-    /// 2.4G 报告通道在序列前先发 payload=[0F] 配置进入包 + Sleep(50) [0x4355C0]。
+    /// 灯光序列: 04 18(flag=1) → 04 13(packet[8]=1, flag=1) → 参数包(flag=0) → 04 02(flag=1) → 04 F0(flag=0)
+    /// 2.4G 报告通道在序列前先发 payload=[0F] 配置进入包 + Sleep(50)。
     ///
     /// 数据流分片: 报告通道 32B/帧 (校验和), Feature 通道 64B/包 (RID 0)。
     /// </summary>
@@ -68,7 +68,7 @@ namespace Ak870Pro.Services
         // ---------------- 连接 ----------------
 
         /// <summary>
-        /// 自动连接 (官方 0x450640 分类流程, 无需指定模式):
+        /// 自动连接 (无需指定模式):
         /// 全量枚举 VID/PID → 打开全部接口 → 按 caps 分类 (Feature65 不握手 / 33/33 报告通道立即握手)。
         /// </summary>
         public async Task<bool> ConnectAsync()
@@ -101,7 +101,7 @@ namespace Ak870Pro.Services
                 {
                     AppLog.Log("报告通道握手: 发送 02 00 00 (期待回显 02 00 00) ...");
                     var payload = new byte[64];
-                    payload[0] = 0x02; // 官方 0x450360: buf[1]=2 → 帧[1]=0x02 (payload[0] ↔ 帧[1])
+                    payload[0] = 0x02; // 握手命令; payload[0] ↔ 帧[1] 一一对应
                     ok = await Task.Run(() => SendAndRecv(ch: pick, payload, 1, "握手"));
                     if (!ok)
                     {
@@ -113,7 +113,7 @@ namespace Ak870Pro.Services
                 }
                 else
                 {
-                    // Feature 通道: 官方分类时不握手 [0x450745-0x450867], 用 04 18 作为连通性探测
+                    // Feature 通道: 分类时不握手, 用 04 18 作为连通性探测
                     ok = await Task.Run(() => SendPacket(Cmd(CmdBegin), needResp: true, logTag: "连通探测"));
                     if (!ok)
                     {
@@ -159,8 +159,7 @@ namespace Ak870Pro.Services
         // ---------------- 命令构造 ----------------
 
         /// <summary>
-        /// 构造 64 字节命令负载: payload[0]=0x04, payload[1]=id; off = 65B 包下标 = payload 下标
-        /// (官方 0x413200 的 buf[0]=类字节与 payload[0] 一一对应, 无偏移; 0x413FF0/0x44C4E0/0x4230AD 反汇编实锤)。
+        /// 构造 64 字节命令负载: payload[0]=0x04, payload[1]=id; off = payload 下标 (无偏移)。
         /// </summary>
         private static byte[] Cmd(byte id, params (int off, byte val)[] fields)
         {
@@ -188,7 +187,7 @@ namespace Ak870Pro.Services
                 return ok;
             }
 
-            // ---- Feature 通道 (原 0x44FAA0 单包状态机) ----
+            // ---- Feature 通道 (单包状态机) ----
             int delay = fastSender ? 5 : CommandDelayMs;
             var pkt = new byte[HidTransport.FeaturePacketSize];
             Array.Copy(payload, 0, pkt, 1, 64); // pkt[0]=0 RID 槽
@@ -246,7 +245,7 @@ namespace Ak870Pro.Services
         }
 
         /// <summary>
-        /// 数据流分片发送。报告通道: 32B/帧 + 校验和@0x20, 包间 2ms (0x44FC90 快速路径时序);
+        /// 数据流分片发送。报告通道: 32B/帧 + 校验和@0x20, 包间 2ms;
         /// Feature 通道: 64B/包 RID=0, 慢速 35ms 重试 10 次 / 快速 2ms 100ms 总时限。
         /// </summary>
         private bool SendStream(byte[] stream, bool fast = false)
@@ -335,13 +334,11 @@ namespace Ak870Pro.Services
             Task.Run(() => SendPacket(Cmd(CmdSelectLayer, (8, (byte)layer)), needResp: true));
 
         /// <summary>
-        /// 系统设置（0x413FF0 完整序列, buf[i]=payload[i] 一一对应）:
-        /// 04 18 → 04 17(payload[2]=1, payload[8]=1) → 00 设置包(流式分片, AA55@0x3E/0x3F, 无应答) → 04 02。
-        /// 设置包复选框实锤 (0x4140A7-0x4140D6 GetCheck 顺序 ↔ 对话框 0x4455xx lan ID):
-        ///   payload[2]=禁用ALT+TAB ([edi+0x678], lan 162), payload[3]=禁用ALT+F4 ([edi+0x67c], lan 161),
-        ///   payload[4]=禁用Window键 ([edi+0x680], lan 160)。
-        /// payload[5]=fn_switch (官方无 UI, 恒发 0), payload[6]=sleep_time, payload[7]=0, payload[8]=key_respondtime。
-        /// 注意官方此序列**没有 04 F0**。
+        /// 系统设置完整序列:
+        /// 04 18 → 04 17(payload[2]=1, payload[8]=1) → 00 设置包(流式分片, AA55@payload[62..63]) → 04 02。
+        /// 设置包字段: payload[2]=禁用ALT+TAB, payload[3]=禁用ALT+F4, payload[4]=禁用Window键。
+        /// payload[5]=fn_switch (协议保留, 恒发 0), payload[6]=sleep_time, payload[7]=0, payload[8]=key_respondtime。
+        /// 注意: 此序列**没有 04 F0**。
         /// </summary>
         public async Task<bool> ApplySettingsAsync(bool disAltTab, bool disAltF4, bool disWinKey, int sleepTime, int respondTime)
         {
@@ -352,28 +349,28 @@ namespace Ak870Pro.Services
 
                 var b = new byte[64];
                 b[0] = ClassSettings;
-                b[1] = 0x01;                    // 固定 1 [0x414088: word 0x0100]
-                b[2] = (byte)(disAltTab ? 1 : 0);   // 禁用ALT+TAB  [0x678] lan 162
-                b[3] = (byte)(disAltF4 ? 1 : 0);    // 禁用ALT+F4   [0x67c] lan 161
-                b[4] = (byte)(disWinKey ? 1 : 0);   // 禁用Window键 [0x680] lan 160
-                b[5] = 0;                       // fn_switch (官方无 UI 控件, 固定 0)
-                b[6] = (byte)sleepTime;         // "sleep_time" [0x414139-0x41417E]
-                b[8] = (byte)respondTime;       // "key_respondtime" [0x41418B-0x4141D0] (buf[7]=0)
-                b[0x3E] = 0xAA; b[0x3F] = 0x55; // [0x4141D6: word 0x55AA]
+                b[1] = 0x01;                    // 协议固定字节 = 1
+                b[2] = (byte)(disAltTab ? 1 : 0);   // 禁用ALT+TAB
+                b[3] = (byte)(disAltF4 ? 1 : 0);    // 禁用ALT+F4
+                b[4] = (byte)(disWinKey ? 1 : 0);   // 禁用Window键
+                b[5] = 0;                       // fn_switch 协议保留, 固定 0
+                b[6] = (byte)sleepTime;         // 睡眠定时
+                b[8] = (byte)respondTime;       // 按键响应档
+                b[0x3E] = 0xAA; b[0x3F] = 0x55; // 固定标记 AA55
                 if (!SendDataPacket(b)) return false;
                 return SendPacket(Cmd(CmdApply), true);
             });
         }
 
         /// <summary>
-        /// 灯效模式切换。官方按通道分流 (事件分发器 0x434910 event 9, [edi+0x4d8]=连接模式):
-        ///  USB (mode=0) 走 0x42B400 SetFeature 序列:
+        /// 灯效模式切换: 按通道分流 (USB mode=0 / 2.4G mode=2):
+        ///  USB (mode=0) 走 SetFeature 序列:
         ///    04 18 → 04 13(payload[8]=1) → 灯效参数包(flag=0) → 04 02 → 04 F0
         ///    参数包: payload[0]=模式号(1..19, 0=关), [1..3]=R,G,B, [8]=colorful, [9]=亮, [10]=速, [11]=方向, AA55@[14..15]
-        ///  2.4G (mode=2) 走 0x42B5A0 单帧包 (经 0x4501C0 回显事务), 无 04 18/04 13/04 02/04 F0:
+        ///  2.4G (mode=2) 走单帧包 (经回显事务), 无 04 18/04 13/04 02/04 F0:
         ///    payload[0..2]=05 10 00, [3]=模式号, [4..6]=R,G,B,
         ///    [11]=colorful [12]=亮 [13]=速 [14]=方向, AA55@[17..18]; mode=0 时仅模式号+AA55。
-        ///    注意: 帧通道绝不能发 04 F0 —— 固件收到帧路径的结束命令会复位重启 (实测实锤)。
+        ///    注意: 帧通道绝不能发 04 F0 —— 固件收到帧路径的结束命令会复位重启 (实测)。
         /// </summary>
         public async Task<bool> SetLightModeAsync(int mode, int brightness, int speed, byte r = 255, byte g = 0, byte b = 0)
         {
@@ -381,7 +378,7 @@ namespace Ak870Pro.Services
             {
                 if (_channel?.Kind == ChannelKind.Report33)
                 {
-                    // ---- 2.4G: 0x42B5A0 单帧命令 ----
+                    // ---- 2.4G 单帧命令 ----
                     var p = new byte[64];
                     p[0] = 0x05;
                     p[1] = 0x10;
@@ -399,7 +396,7 @@ namespace Ak870Pro.Services
                     return SendPacket(p, true, "灯效帧 05 10");
                 }
 
-                // ---- USB Feature: 0x42B400 序列 ----
+                // ---- USB Feature 序列 ----
                 if (!SendPacket(Cmd(CmdBegin), true)) return false;
                 if (!SendPacket(Cmd(CmdSelectLayer, (8, 1)), true)) return false;
 
@@ -426,11 +423,11 @@ namespace Ak870Pro.Services
         public bool IsReportChannel => _channel?.Kind == ChannelKind.Report33;
 
         /// <summary>
-        /// 进入音乐律动 (官方 0x434FE0 按连接模式分流, 事件 0xA):
-        ///  2.4G: 单帧 payload=[05 01 00 foremode], AA55@[17..18] (0x4501C0 回显事务, 一次性)
-        ///  USB:  04 18 → 04 13(层1) → 参数包(payload[0]=foremode, AA55@[14..15], 无应答) → 04 02 → 04 F0 (0x4346B0)
+        /// 进入音乐律动 (按连接模式分流):
+        ///  2.4G: 单帧 payload=[05 01 00 foremode], AA55@[17..18] (回显事务, 一次性)
+        ///  USB:  04 18 → 04 13(层1) → 参数包(payload[0]=foremode, AA55@[14..15], 无应答) → 04 02 → 04 F0
         /// 注意: 此命令仅是"进入音乐显示模式"开关, 之后必须 ~33ms 周期持续调用
-        /// SendMusicFrame24Async / SendMusicFrameUsbAsync 推送动效数据, 否则键盘无动画 (官方 0x433A00 分流实锤)。
+        /// SendMusicFrame24Async / SendMusicFrameUsbAsync 推送动效数据, 否则键盘无动画。
         /// </summary>
         public async Task<bool> EnterMusicModeAsync(int foremode)
         {
@@ -444,7 +441,7 @@ namespace Ak870Pro.Services
                     return SendPacket(p, true, "音乐进入 05 01");
                 }
 
-                // ---- USB Feature: 0x4346B0 序列 ----
+                // ---- USB Feature 序列 ----
                 if (!SendPacket(Cmd(CmdBegin), true)) return false;
                 if (!SendPacket(Cmd(CmdSelectLayer, (8, 1)), true)) return false;
                 var pk = new byte[64];
@@ -458,11 +455,11 @@ namespace Ak870Pro.Services
         }
 
         /// <summary>
-        /// 2.4G 音乐律动数据帧 (官方 0x4330C0 栈帧逐字节实锤, 经 0x4501C0 发送 len=0x21):
+        /// 2.4G 音乐律动数据帧 (直接含 ReportID 槽):
         ///   buf 直接含 ReportID 槽: buf[0]=0, buf[1]=0x0b, buf[2]=0x1c, buf[3]=0,
-        ///   buf[4]=GetCurData(显示模式下拉)=foremode, buf[5]=GetCurData(背景下拉)=bgMode,
-        ///   buf[6]=背景亮度滑块位置([[0x638]+0x144]), buf[7..27]=21 列频谱高度,
-        ///   buf[32]=校验和 (0x4501C0 覆盖 buf[0..31] 求和)。
+        ///   buf[4]=显示模式, buf[5]=背景模式,
+        ///   buf[6]=背景亮度, buf[7..27]=21 列频谱高度,
+        ///   buf[32]=校验和 (buf[0..31] 求和)。
         /// 动画帧允许丢帧 → fire-and-forget (不做回显等待, 保持 33ms 节奏)。
         /// </summary>
         public Task<bool> SendMusicFrame24Async(byte[] heights21, int foremode, int bgMode, int bgBright)
@@ -484,7 +481,8 @@ namespace Ak870Pro.Services
         }
 
         /// <summary>
-        /// USB 音乐律动数据帧 (官方 0x432E80):
+        /// USB 音乐律动数据帧:
+        ///   04 20 → 512B 全键 RGB 流 (每个像素 3B: R,G,B, 共 170 键 × 3B) → 04 02
         ///   04 20 (payload[8]=8, 逐键RGB模式) → 512B 数据流 ([灯槽,R,G,B]×128 四元组) → 04 02, 全快速路径。
         /// </summary>
         public Task<bool> SendMusicFrameUsbAsync(byte[] stream512)
@@ -499,7 +497,7 @@ namespace Ak870Pro.Services
         }
 
         /// <summary>
-        /// 清除自定义灯效方案（0x44C4E0）:
+        /// 清除自定义灯效方案:
         /// 04 18 → 04 13(层1) → 0x80 方案包(payload[8]=方案号, AA55@0x0E, 全零=清除, 无应答) → 04 02 → 04 F0。
         /// </summary>
         public async Task<bool> ClearCustomSchemeAsync(int profile = 0)
@@ -523,7 +521,7 @@ namespace Ak870Pro.Services
         }
 
         /// <summary>
-        /// 逐键自定义 RGB（0x44C5F0 完整序列）:
+        /// 逐键自定义 RGB:
         /// 清除方案 → 04 18 → 04 23(packet[8]=9) → 576B 数据流(9x64B, 尾部 AA55) → 04 02 → 04 F0。
         /// 数据流: 每个 LED 槽 4 字节 @ slot*4 = [slot号, R, G, B]。
         /// </summary>
@@ -593,7 +591,7 @@ namespace Ak870Pro.Services
             Task.Run(() => SendStream(stream, fast: false));
 
         /// <summary>
-        /// 专属配置改键表上传 (官方 0x418590 USB / 0x418E30 2.4G, 连接后事件 6 自动触发)。
+        /// 专属配置改键表上传 (USB / 2.4G 两种通道序列)。
         /// table576 = 144 槽 × 4B (槽号 = 布局 key_index): 默认 [05 03 00 00], 禁用 [00 00 00 00],
         /// 键盘按键 [02 modMask usage], 表尾 AA55@0x23E/0x23F。
         /// USB: 04 18 → 04 11(常规)/04 27(Fn层) [8]=9(包数) → 576B 流(RID=0 ×9) → 04 02 → 04 F0 (全部 resp=1)。

@@ -5,10 +5,8 @@ namespace Ak870Pro.Services
     /// <summary>
     /// WASAPI 环回采集 + FFT → 21 列频谱高度 (0..MaxHeight)。
     ///
-    /// 官方驱动实锤无任何音频采集 API (DeviceDriver.exe/mui.dll 均无 WASAPI/waveIn 导入),
-    /// 其音乐律动界面动画由 mui.dll 查表假频谱生成 (0x100B04A8 相位旋转表), 30ms 线程
-    /// 把动画数据实时推到键盘。此处实现**真实**系统音频环回拾音; 采集不可用时自动退化
-    /// 为官方同款相位假频谱, 保证律动可用。
+    /// 实现真实系统音频环回拾音 (WASAPI Loopback) + FFT 频谱分析; 采集不可用时自动退化
+    /// 为内置相位旋转假频谱, 保证律动始终可用。
     ///
     /// COM 访问走裸 vtable 委托 (Marshal.GetDelegateForFunctionPointer), 不走 RCW —
     /// 在本进程 (WinUI3/CsWinRT 混部) RCW 接口转换会抛 InvalidCastException。
@@ -185,7 +183,7 @@ namespace Ak870Pro.Services
             ComputeBands();
             float peak = 0;
             for (int i = 0; i < Columns; i++) peak = MathF.Max(peak, _bandMag[i]);
-            // 官方"停了就灭"的本质: 音乐有节奏/动态, 页面底噪和静音是"死"的——
+            // "停了就灭"判定: 音乐有节奏/动态, 页面底噪和静音是"死"的——
             // 频谱帧间几乎不变。电平法会漏(底噪电平不固定, 0.10~0.23 都出现过),
             // 改为测帧间变化量: 播放时逐帧差异大, 暂停后变化量趋零, 与绝对电平解耦。
             float diff = 0;
@@ -310,7 +308,7 @@ namespace Ak870Pro.Services
             }
         }
 
-        /// <summary>官方同款假频谱 (查表相位旋转, 0x100B04A8 等价行为)。</summary>
+        /// <summary>内置假频谱 (查表相位旋转, 采集不可用时的退化动画)。</summary>
         private void UpdateFake(byte[] heightsOut)
         {
             _fakePhase += 0.35;

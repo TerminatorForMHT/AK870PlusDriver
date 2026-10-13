@@ -3,13 +3,13 @@ using System.Runtime.InteropServices;
 namespace Ak870Pro.Services
 {
     /// <summary>
-    /// 音乐律动引擎 — 复刻官方 30ms 工作线程行为 (0x45B020 → 0x433A00):
+    /// 音乐律动引擎:
     /// 进入音乐模式后, ~33ms 周期持续向键盘推送动效数据, 停止发送则键盘动画静止。
-    ///   2.4G: 0b 1c 频谱帧 (0x4330C0): buf[4]=显示模式, buf[5]=背景模式, buf[6]=背景亮度, buf[7..27]=21列高度
-    ///   USB:  04 20 + 512B 全键 RGB 流 + 04 02 (0x432E80), 颜色由 PC 端按显示模式/背景模式渲染
-    /// 数据源: AudioSpectrum (WASAPI 环回真实拾音, 失败退化官方同款假频谱)。
-    /// 参数 (显示模式/振幅/背景模式/背景亮度) 运行中可经 UpdateParams 实时更新 — 与官方
-    /// worker 每 tick 重读下拉 data 的行为一致, 无需重发进入帧。
+    ///   2.4G: 0b 1c 频谱帧: buf[4]=显示模式, buf[5]=背景模式, buf[6]=背景亮度, buf[7..27]=21列高度
+    ///   USB:  04 20 + 512B 全键 RGB 流 + 04 02, 颜色由 PC 端按显示模式/背景模式渲染
+    /// 数据源: AudioSpectrum (WASAPI 环回真实拾音, 失败退化内置假频谱)。
+    /// 参数 (显示模式/振幅/背景模式/背景亮度) 运行中可经 UpdateParams 实时更新 —
+    /// 每 tick 重读当前参数, 无需重发进入帧。
     /// </summary>
     public static class MusicEngine
     {
@@ -30,7 +30,7 @@ namespace Ak870Pro.Services
             _ = Task.Run(() => Loop(p, cts));
         }
 
-        /// <summary>运行中实时更新 4 参数 (官方 combo/slider OnChange 即生效, 不重发进入帧)。</summary>
+        /// <summary>运行中实时更新 4 参数 (循环每 tick 重读, 即改即生效, 不重发进入帧)。</summary>
         public static void UpdateParams(int foremode, int amp, int bgMode, int bgBright)
         {
             var p = _params;
@@ -52,7 +52,7 @@ namespace Ak870Pro.Services
             AppLog.Log($"音乐律动数据流开始 (foremode={p.Fore}, amp={p.Amp}, bg={p.BgMode}@{p.BgBright}, 33ms 周期)");
             using var spec = new AudioSpectrum();
             spec.Start();
-            if (!spec.Live) AppLog.Log("使用内置假频谱 (官方同款行为)");
+            if (!spec.Live) AppLog.Log("使用内置假频谱");
 
             var keys = LayoutService.LoadKeys();
             int maxRow = keys.Count > 0 ? keys.Max(k => k.Row) : 5;
@@ -72,8 +72,7 @@ namespace Ak870Pro.Services
                     }
                     long t0 = Environment.TickCount64;
                     spec.Update(heights);
-                    // 振幅 = PC 端对 21 列高度缩放 (官方滑块默认 60 → ×1.0; 官方字段 [0xC80]
-                    // 写后从未读取, 疑似半成品, 此处实现为真实缩放)。
+                    // 振幅 = PC 端对 21 列高度缩放 (滑块 60 → ×1.0, 实现为真实缩放)。
                     float ampScale = Math.Clamp(p.Amp, 0, 100) / 60f;
                     if (ampScale != 1f)
                         for (int i = 0; i < heights.Length; i++)
@@ -114,7 +113,7 @@ namespace Ak870Pro.Services
         }
 
         /// <summary>USB 流: 每键 4 字节 [灯槽, R, G, B]。点亮键按显示模式取色 (屏光联动用屏幕取色),
-        /// 未点亮键按背景模式×背景亮度填静态色 (无=黑, 官方背景为固件/网格静态渲染)。</summary>
+        /// 未点亮键按背景模式×背景亮度填静态色 (无=黑)。</summary>
         private static byte[] BuildUsbStream(
             List<Models.KeyInfo> keys, byte[] heights,
             int foremode, int bgMode, int bgBright, int maxRow, int maxCol, int tick, ScreenSampler? screen)
@@ -148,7 +147,7 @@ namespace Ak870Pro.Services
             return stream;
         }
 
-        /// <summary>显示/背景模式 data → 列颜色 (官方 0x433A00 调色板 [0x50CA0] 等价行为)。
+        /// <summary>显示/背景模式 data → 列颜色。
         /// 1 绿黄红(列渐变) 2 彩虹 3 彩虹反向 4 色谱(随时间轮转) 5 频谱循环(列+时间)
         /// 6 白 7 红 8 橙 9 黄 10 蓝 11 绿。</summary>
         private static (byte r, byte g, byte b) ModeColor(int mode, int col, int tick)
@@ -190,7 +189,7 @@ namespace Ak870Pro.Services
         }
 
         /// <summary>
-        /// 屏光联动取色 (仅 USB, 官方 0x433A00 屏幕取色网格 [0x523CC] 等价行为):
+        /// 屏光联动取色 (仅 USB):
         /// 每帧把主屏 StretchBlt 到 21×rows 小位图, 按键行列映射取网格色。
         /// </summary>
         private sealed class ScreenSampler : IDisposable

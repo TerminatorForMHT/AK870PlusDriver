@@ -18,7 +18,7 @@
                         <Button x:Name="ConnectBtn" Content="重新扫描连接" Click="Connect_Click" Style="{ThemeResource AccentButtonStyle}"/>
                         <Button x:Name="DisconnectBtn" Content="断开" Click="Disconnect_Click" IsEnabled="False"/>
                     </StackPanel>
-                    <TextBlock x:Name="InfoText" Text="与官方驱动一致：程序启动及设备插入/拔出时自动扫描并握手，无需选择连接模式（USB/2.4G 由接口路径自动判定）。"
+                    <TextBlock x:Name="InfoText" Text="程序启动及设备插入/拔出时自动扫描并握手，无需选择连接模式（USB/2.4G 由接口路径自动判定）。"
                                TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 </StackPanel>
             </Border>

@@ -53,7 +53,7 @@
                                Text="DEBUG 模式已开启：侧边栏显示协议日志。再次连点版本号 7 次可关闭。"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
                                Visibility="Collapsed"/>
-                    <TextBlock Text="AK870 Plus 键盘驱动 · 基于官方驱动协议逆向实现 (WinUI3 重写)"
+                    <TextBlock Text="AK870 Plus 键盘驱动 (WinUI3)"
                                Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap"/>
                 </StackPanel>
             </Border>

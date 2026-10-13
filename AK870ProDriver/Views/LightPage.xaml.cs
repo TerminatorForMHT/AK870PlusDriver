@@ -36,7 +36,7 @@ namespace Ak870Pro.Views
                     LayoutService.MusicBgModeData[bi], (int)BgBrightSlider.Value);
         }
 
-        /// <summary>屏光联动 (data=100) 选中时隐藏振幅/背景控件 (官方 0x434140 行为)。</summary>
+        /// <summary>屏光联动 (data=100) 选中时隐藏振幅/背景控件。</summary>
         private void UpdateMusicOptionVisibility()
         {
             int fi = MusicCombo.SelectedIndex;
@@ -47,12 +47,12 @@ namespace Ak870Pro.Views
             BgBrightRow.Visibility = vis;
         }
 
-        // 律动运行中改任一参数: 实时更新引擎 (官方 worker 每 tick 重读下拉 data, 不重发进入帧)。
+        // 律动运行中改任一参数: 实时更新引擎 (循环每 tick 重读参数, 不重发进入帧)。
         private void MusicCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (_loading || Busy) return;
             UpdateMusicOptionVisibility();
-            // 屏光联动仅 USB 存在 (官方 2.4G 下拉里无此项), 运行中选中则回退
+            // 屏光联动仅 USB 存在 (2.4G 下拉里无此项), 运行中选中则回退
             var p = CurrentMusicParams();
             if (p.fore == 100 && AppState.Device.IsReportChannel && MusicEngine.Running)
             {
@@ -122,7 +122,7 @@ namespace Ak870Pro.Views
         private void ModeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (_loading) return;
-            // 选灯效即立即应用（官方行为: 下拉一改就发 05 10 帧）
+            // 选灯效即立即应用（下拉一改就发 05 10 帧）
             _ = ApplyLightAsync();
         }
 
@@ -157,7 +157,7 @@ namespace Ak870Pro.Views
             if (AppState.State != ConnState.Connected) { ToastService.Show("请先在主页连接设备", false); return; }
             if (Busy) return;
             var p = CurrentMusicParams();
-            // 屏光联动仅 USB 存在 (官方 0x41F1CD 按通道条件添加, 2.4G 下拉无此项)
+            // 屏光联动仅 USB 存在 (2.4G 下拉无此项)
             if (p.fore == 100 && AppState.Device.IsReportChannel)
             {
                 ToastService.Show("屏光联动仅 USB 连接支持", false);
@@ -170,7 +170,7 @@ namespace Ak870Pro.Views
                 if (ok)
                 {
                     Persist();
-                    // 进入音乐模式只是开关, 键盘动画靠 PC 端 ~33ms 持续推送数据帧 (官方 0x433A00 机制)
+                    // 进入音乐模式只是开关, 键盘动画靠 PC 端 ~33ms 持续推送数据帧
                     MusicEngine.Start(p.fore, p.amp, p.bgMode, p.bgBright);
                 }
                 ToastService.Show(ok ? $"音乐律动已开启: {MusicCombo.SelectedItem}" : "开启失败，详见协议日志", ok);
@@ -186,7 +186,7 @@ namespace Ak870Pro.Views
             try
             {
                 MusicEngine.Stop();
-                // 官方无独立"关音乐"命令: 发一次普通灯效即覆盖退出律动模式
+                // 无独立"关音乐"命令: 发一次普通灯效即覆盖退出律动模式
                 bool ok = await AppState.Device.SetLightModeAsync(
                     mode: LayoutService.ProtocolModeOf(ModeCombo.SelectedIndex),
                     brightness: (int)BrightSlider.Value,

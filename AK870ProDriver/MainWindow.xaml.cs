@@ -31,8 +31,8 @@ namespace Ak870Pro
                 _wasConnected = s == Services.ConnState.Connected;
             });
             UpdateStatus();
-            // 官方机制: 窗口建立后即注册 WM_DEVICECHANGE 监视, 启动自动扫描握手,
-            // 设备插入/拔出自动重连 (DeviceMonitor → 0x4321C0/0x41FD80/0x41F690 等价实现)。
+            // 窗口建立后即注册 WM_DEVICECHANGE 监视, 启动自动扫描握手,
+            // 设备插入/拔出自动重连 (DeviceMonitor)。
             Services.DeviceMonitor.Start(this);
             Services.TrayService.Attach(this);
             SetWindowIcon();

@@ -18,7 +18,7 @@ namespace Ak870Pro.Services
         public bool IsEmpty => Kind == RemapKind.Default && Usage == 0 && Mod == 0;
     }
 
-    /// <summary>专属配置方案: PC 端方案管理 (对齐官方"我的专属配置"), 应用时上传改键表到键盘。</summary>
+    /// <summary>专属配置方案: PC 端方案管理 ("我的专属配置"), 应用时上传改键表到键盘。</summary>
     public sealed class RemapProfile
     {
         public string Id { get; set; } = Guid.NewGuid().ToString("N");
@@ -57,7 +57,7 @@ namespace Ak870Pro.Services
     }
 
     /// <summary>
-    /// 专属配置改键表编码 — 官方 0x418590 组包逻辑还原:
+    /// 专属配置改键表编码:
     /// 576B = 144 槽 × 4B, 槽号 = key_index; 记录: 默认 [05 03 00 00], 禁用/未设置 [00 00 00 00],
     /// 键盘按键 [02 mod usage 00]; AA55@0x23E/0x23F (末槽高半字)。
     /// </summary>
@@ -66,14 +66,14 @@ namespace Ak870Pro.Services
         public const int SlotCount = 144;
         public const int TableSize = SlotCount * 4; // 576 = 0x240
 
-        // 官方 0x418590 type 5 (鼠标): param 1..8 → record[1..2] LE 词值 (lan 220-228:
-        // 左键单击/中键单击/右键单击/双击/向上滚动/向下滚动/鼠标按钮4/鼠标按钮5)
+        // type 5 (鼠标): param 1..8 → record[1..2] LE 词值
+        // (左键单击/中键单击/右键单击/双击/向上滚动/向下滚动/鼠标按钮4/鼠标按钮5)
         public static readonly int[] MouseWords = { 0x0101, 0x0401, 0x0201, 0x0301, 0x0103, 0x03ff, 0x0801, 0x1001 };
-        // type 6 (多媒体): param 1..7 → record[1] consumer 码 (lan 230-236:
-        // 播放暂停/下一首/上一首/停止/音量+/音量-/静音)
+        // type 6 (多媒体): param 1..7 → record[1] consumer 码
+        // (播放暂停/下一首/上一首/停止/音量+/音量-/静音)
         public static readonly byte[] MediaCodes = { 0xCD, 0xB7, 0xB6, 0xB5, 0xE9, 0xEA, 0xE2 };
-        // type 7 (Windows快捷): param → record[1..2] LE 词值 (lan 251-259:
-        // 显示桌面/我的电脑/锁定计算机/关闭窗口/切换Windows/注销/睡眠/关机/重启)
+        // type 7 (Windows快捷): param → record[1..2] LE 词值
+        // (显示桌面/我的电脑/锁定计算机/关闭窗口/切换Windows/注销/睡眠/关机/重启)
         public static readonly Dictionary<int, int> WinWords = new()
         {
             [1] = 0x0807, [2] = 0x0808, [3] = 0x080F, [4] = 0x011A, [5] = 0x042B,
@@ -83,8 +83,8 @@ namespace Ak870Pro.Services
         public static byte[] BuildTable(IReadOnlyCollection<RemapEntry> entries)
         {
             var t = new byte[TableSize];
-            // 官方语义: 全 0 = 禁用 (type 4 不写即保持 0), 默认透传 = [05 03] (type 1)。
-            // 官方 config 列出所有键, 故未配置槽必须先填默认, 否则整键盘会被禁用。
+            // 语义: 全 0 = 禁用 (type 4 不写即保持 0), 默认透传 = [05 03] (type 1)。
+            // 未配置槽必须先填默认, 否则整键盘会被禁用。
             for (int s = 1; s < SlotCount; s++)
             {
                 t[s * 4] = 0x05;

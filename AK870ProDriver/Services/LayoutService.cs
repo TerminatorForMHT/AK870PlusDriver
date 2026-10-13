@@ -23,7 +23,7 @@ namespace Ak870Pro.Services
     /// <summary>解析 rgb-keyboard.xml（87 键布局 + 灯效配置）。</summary>
     public static class LayoutService
     {
-        /// <summary>灯效模式名（language/2052.lan 521-540，下拉顺序）。UI 索引 ≠ 协议 mode：索引 0..18 → 协议 mode 1..19，索引 19（关闭背光）→ 协议 mode 0。</summary>
+        /// <summary>灯效模式名（下拉顺序）。UI 索引 ≠ 协议 mode：索引 0..18 → 协议 mode 1..19，索引 19（关闭背光）→ 协议 mode 0。</summary>
         public static readonly string[] LightModes =
         {
             "静态恒亮","单点亮","单熄灭","繁星点点","漫天飞雪",
@@ -34,13 +34,13 @@ namespace Ak870Pro.Services
 
         public static (int mode, int bright, int speed) Defaults = (0, 5, 3);
 
-        /// <summary>UI 下拉索引 → 协议 mode 号（官方 t_light_data: mode 1..19 为灯效, 0 为关闭背光）。</summary>
+        /// <summary>UI 下拉索引 → 协议 mode 号（mode 1..19 为灯效, 0 为关闭背光）。</summary>
         public static int ProtocolModeOf(int uiIndex)
             => uiIndex < 0 ? 1 : (uiIndex >= LightModes.Length - 1 ? 0 : uiIndex + 1);
 
-        /// <summary>音乐律动"显示模式"下拉 (官方 0x41EF30 AddItem 顺序实锤)。
-        /// 注意: UI 顺序索引 ≠ 协议 data — 官方 MComboBox AddItem 第三个 push 才是 data 值,
-        /// 蓝=10/绿=11 反序, 屏光联动=100 且仅 USB 通道存在 (官方 0x41F1CD 按通道条件添加)。
+        /// <summary>音乐律动"显示模式"下拉顺序。
+        /// 注意: UI 顺序索引 ≠ 协议 data — 蓝色/绿色与直觉顺序相反,
+        /// 屏光联动=100 且仅 USB 通道存在。
         /// 青/无/紫 不在前景下拉。进帧必须用 MusicModeData 映射, 严禁 SelectedIndex+1。</summary>
         public static readonly string[] MusicModes =
         {
@@ -48,10 +48,10 @@ namespace Ak870Pro.Services
             "白色","红色","橙色","黄色","蓝色","绿色","屏光联动"
         };
 
-        /// <summary>MusicModes 各项的协议 data 值 (官方 AddItem data 实锤)。</summary>
+        /// <summary>MusicModes 各项的协议 data 值。</summary>
         public static readonly int[] MusicModeData = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 100 };
 
-        /// <summary>音乐律动"背景灯光显示模式"下拉 (官方 0x43B5C0 填充处实锤, 12 项, 无=0 开头)。</summary>
+        /// <summary>音乐律动"背景灯光显示模式"下拉 (12 项, 无=0 开头)。</summary>
         public static readonly string[] MusicBgModes =
         {
             "无","白色","红色","橙色","黄色","蓝色","绿色",
@@ -76,13 +76,13 @@ namespace Ak870Pro.Services
                         Name = (string?)el.Attribute("name") ?? "",
                         KeyIndex = (int?)el.Attribute("key_index") ?? 0,
                         LightIndex = (int?)el.Attribute("light_index") ?? 0,
-                        Left = (int?)el.Attribute("rect_left") ?? 0,
-                        Top = (int?)el.Attribute("rect_top") ?? 0,
-                        Width = (int?)el.Attribute("rect_width") ?? 0,
-                        Height = (int?)el.Attribute("rect_height") ?? 0,
+                        Left = (int?)el.Attribute("left") ?? 0,
+                        Top = (int?)el.Attribute("top") ?? 0,
+                        Width = (int?)el.Attribute("width") ?? 0,
+                        Height = (int?)el.Attribute("height") ?? 0,
+                        Row = (int?)el.Attribute("row") ?? 0,
+                        Col = (int?)el.Attribute("col") ?? 0,
                     };
-                    var rc = ((string?)el.Attribute("row_col") ?? "0#0").Split('#');
-                    if (rc.Length == 2) { k.Row = int.Parse(rc[0]); k.Col = int.Parse(rc[1]); }
                     list.Add(k);
                 }
             }

@@ -165,7 +165,7 @@ namespace Ak870Pro.Views
 
         private void BuildKeyboard()
         {
-            // XML 坐标基于官方 800x300 布局图; 统一平移到 (0,0) 后等比映射进 760x420 Canvas (外层 Viewbox 再自适应)
+            // XML 坐标基于 800x300 布局图; 统一平移到 (0,0) 后等比映射进 760x420 Canvas (外层 Viewbox 再自适应)
             int minL = AppState.Keys.Min(k => k.Left);
             int minT = AppState.Keys.Min(k => k.Top);
             int maxR = AppState.Keys.Max(k => k.Left + k.Width);

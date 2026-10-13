@@ -48,9 +48,9 @@ namespace Ak870Pro.Services
     public enum ChannelKind
     {
         None,
-        /// <summary>报告通道: Output=33 / Input=33 (WriteFile/ReadFile, 0x451DF0/0x451ED0)。</summary>
+        /// <summary>报告通道: Output=33 / Input=33 (WriteFile/ReadFile)。</summary>
         Report33,
-        /// <summary>Feature 通道: FeatureReport=65 (HidD_SetFeature / IOCTL_HID_GET_FEATURE, 0x452010/0x4520B0)。</summary>
+        /// <summary>Feature 通道: FeatureReport=65 (HidD_SetFeature / IOCTL_HID_GET_FEATURE)。</summary>
         Feature65,
     }
 
@@ -71,7 +71,7 @@ namespace Ak870Pro.Services
         public ChannelKind Kind;
         public IntPtr Handle;
 
-        // 报告通道异步读写状态 (复刻原驱动 0x451ED0 常驻 IRP 模式)
+        // 报告通道异步读写状态 (常驻 IRP 模式)
         internal byte[]? ReadBuf;
         internal System.Threading.NativeOverlapped ReadOv;
         internal System.Threading.NativeOverlapped WriteOv;
@@ -83,16 +83,16 @@ namespace Ak870Pro.Services
     }
 
     /// <summary>
-    /// HID 传输层 — 机制与原驱动 (DeviceDriver.exe) 一致:
+    /// HID 传输层:
     ///
-    /// 打开: CreateFile(GENERIC_RW, share=RD|WR, OPEN_EXISTING, FILE_FLAG_OVERLAPPED)  [0x451C50]
+    /// 打开: CreateFile(GENERIC_RW, share=RD|WR, OPEN_EXISTING, FILE_FLAG_OVERLAPPED)
     /// caps: HidD_GetPreparsedData + HidP_GetCaps (HIDP_STATUS_SUCCESS = 0x00110000)
-    /// 分类: FeatureReportByteLength==65 → Feature 通道 | Output==33 且 Input==33 → 报告通道 [0x450640]
+    /// 分类: FeatureReportByteLength==65 → Feature 通道 | Output==33 且 Input==33 → 报告通道
     ///
-    /// 报告通道帧 (33 字节, [0x4501C0]):
+    /// 报告通道帧 (33 字节):
     ///   frame[0..len)  = 负载 (frame[0]=类字节 0x04/0x00/0x80, frame[1]=命令)
     ///   frame[0x20]    = 校验和 = sum(frame[0..len)) & 0xFF
-    ///   发送 = WriteFile(33B, OVERLAPPED, 失败补发一次) [0x451DF0 自动零填充到 OutputReportByteLength]
+    ///   发送 = WriteFile(33B, OVERLAPPED, 失败补发一次), 自动零填充到 OutputReportByteLength
     ///   应答 = ReadFile 常驻 IRP, 校验 resp[0..2] == sent[1..3], 重试 20 次 x 10ms
     /// </summary>
     public static class HidTransport
@@ -316,7 +316,7 @@ namespace Ak870Pro.Services
                         }
                         finally { HidD_FreePreparsedData(pp); }
 
-                        // 按官方驱动规则分类 [0x450640]
+                        // 按固定规则分类
                         if (info.FeatureReportLength == FeaturePacketSize)
                             info.Kind = ChannelKind.Feature65;
                         else if (info.OutputReportLength == ReportFrameSize && info.InputReportLength == ReportFrameSize)
@@ -343,7 +343,7 @@ namespace Ak870Pro.Services
         }
 
         /// <summary>
-        /// 按官方驱动优先级挑通道: 报告通道 (usage FF60/0x61, 33/33) 优先 — 接收器实际配置通道;
+        /// 通道选择优先级: 报告通道 (usage FF60/0x61, 33/33) 优先 — 接收器实际配置通道;
         /// 其次 Feature=65 (USB 直连形态)。
         /// </summary>
         public static HidDeviceInfo? PickChannel(List<HidDeviceInfo> list)
@@ -363,7 +363,7 @@ namespace Ak870Pro.Services
             return best;
         }
 
-        /// <summary>设备仍在系统枚举列表中? (只枚举路径, 不打开设备 — 官方 0x41FD80 移除事件后重扫等价)</summary>
+        /// <summary>设备仍在系统枚举列表中? (只枚举路径, 不打开设备 — 用于断开重扫)</summary>
         public static bool IsChannelPresent(string channelPath)
         {
             var list = Enumerate("", open: false);
@@ -378,7 +378,7 @@ namespace Ak870Pro.Services
             _ => interfaceTag,
         };
 
-        // ---------------- 报告通道传输 (0x451DF0 / 0x451ED0) ----------------
+        // ---------------- 报告通道传输 ----------------
 
         private static bool EnsureReadArmed(HidDeviceInfo d)
         {
@@ -426,7 +426,7 @@ namespace Ak870Pro.Services
                 return -1;
             }
             d.ReadPending = false;
-            // 官方 0x451ED0: 内部读缓冲[0]==0 (ReportID=0) → 剥掉 RID 字节再拷给调用者
+            // 内部读缓冲[0]==0 (ReportID=0) → 剥掉 RID 字节再拷给调用者
             int n;
             if (bytes > 0 && d.ReadBuf![0] == 0)
             {
@@ -441,7 +441,7 @@ namespace Ak870Pro.Services
             return n;
         }
 
-        /// <summary>WriteFile 发送, 自动补零到 OutputReportByteLength (0x451DF0)。IRP 等待有界(500ms), 超时取消——键盘休眠时 IRP 永不完成, 无限等待会把连接锁永久卡死。</summary>
+        /// <summary>WriteFile 发送, 自动补零到 OutputReportByteLength。IRP 等待有界(500ms), 超时取消——键盘休眠时 IRP 永不完成, 无限等待会把连接锁永久卡死。</summary>
         public static int SendData(HidDeviceInfo d, byte[] payload, int len)
         {
             byte[] frame;
@@ -497,9 +497,9 @@ namespace Ak870Pro.Services
         }
 
         /// <summary>
-        /// 报告通道单帧事务 (复刻 0x4501C0/0x450360):
+        /// 报告通道单帧事务:
         /// 帧[0]=RID 槽(必须 0), 帧[1..0x20)=payload64[0..0x1F), 帧[0x20]=校验和=sum(帧[1..0x20))&0xFF。
-        /// WriteFile(33B) → 失败补发 → Sleep(5) → 读回显 (RID 已剥) resp[0..2]==payload64[0..2], 重试 20x10ms。
+        /// WriteFile(33B) → 失败补发 → Sleep(5) → 读回显 (RID 已剥) resp[0..2]==payload64[0..2], 重试 60x10ms (放宽以容纳某些灯效模式 ~600ms 处理耗时)。
         /// 成功后把应答拷回 payload64[0..n]。
         /// </summary>
         public static bool SendAndRecvReport(HidDeviceInfo d, byte[] payload64, int len)
@@ -520,14 +520,12 @@ namespace Ak870Pro.Services
 
             Delay(5);
             var resp = new byte[ReportFrameSize];
-            // 官方重试 20x10ms; 实测个别灯效(如 mode 0x13 重峦叠嶂)模式切换耗时 ~600ms 才回显,
-            // 期间 IN 报告被占用 → 放宽到 60x10ms, 避免"设置已生效但提示失败"的假报错。
             for (int attempt = 0; attempt < 60; attempt++)
             {
                 int n = ReceiveData(d, resp, 5);
                 if (n > 0)
                 {
-                    // 官方回显校验 [0x4501C0 0x4502f5]: esi[1..3] == resp[0..2] → payload64[0..2]
+                    // 回显校验: esi[1..3] == resp[0..2] → payload64[0..2]
                     byte e0 = take > 0 ? payload64[0] : (byte)0;
                     byte e1 = take > 1 ? payload64[1] : (byte)0;
                     byte e2 = take > 2 ? payload64[2] : (byte)0;
@@ -544,7 +542,7 @@ namespace Ak870Pro.Services
             return false;
         }
 
-        // ---------------- Feature 通道传输 (0x452010 / 0x4520B0) ----------------
+        // ---------------- Feature 通道传输 ----------------
 
         public static bool SetFeature(IntPtr h, byte[] packet65)
         {

@@ -8,7 +8,7 @@
             <TextBlock Text="宏管理器" FontSize="28" FontWeight="SemiBold"/>
 
             <InfoBar Severity="Warning" Title="宏上传暂未启用" IsOpen="True" IsClosable="False"
-                     Message="键盘端宏下发格式 (04 19 + 0xE00 事件流, 0xB0/0x30/0x90/0x50 标志) 已从反汇编部分还原，待实机抓包验证后启用上传。当前版本宏保存在本地。"/>
+                     Message="键盘端宏下发格式 (04 19 + 0xE00 事件流) 待实机验证后启用上传。当前版本宏保存在本地。"/>
 
             <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"

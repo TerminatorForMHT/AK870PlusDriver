@@ -30,7 +30,7 @@
                 </StackPanel>
             </Border>
 
-            <!-- 音乐律动: PC 端 ~33ms 持续向键盘推送频谱数据流 (官方 0x433A00 机制) -->
+            <!-- 音乐律动: PC 端 ~33ms 持续向键盘推送频谱数据流 -->
             <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
                     CornerRadius="8" Padding="16">

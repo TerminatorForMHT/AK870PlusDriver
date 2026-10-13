@@ -4,5 +4,34 @@ obj/
 *.suo
 .vs/
 resources.language-*.pri
+
+# reverse engineering workspace (not shipped)
 _re_work/
+extracted/
+*.txt
+
+# certificates - NEVER commit
+*.pfx
+*.cer
+*.pvk
+
+# MSIX packaging artifacts (signs locally, do not ship)
+*.msix
+*.appxbundle
+msix-payload/
+msix-output/
+
+# build outputs
 *.exe
+*.dll
+*.pdb
+*.log
+
+# generated MSIX asset pack (regenerated from Assets/app_256.png before packaging)
+PackageAssets/
+
+# keep tracked build stub
+!BuildTasks/*.dll
+
+# analysis docs (reference only, not shipped source)
+协议与接口分析.md
