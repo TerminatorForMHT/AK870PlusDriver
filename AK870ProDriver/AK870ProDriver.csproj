@@ -76,6 +76,17 @@
           SkipUnchangedFiles="true" />
     <Copy SourceFiles="$(OutDir)Microsoft.UI.pri;$(OutDir)Microsoft.UI.Xaml.Controls.pri"
           DestinationFolder="$(_PriSrc)" SkipUnchangedFiles="true" />
+    <!--
+      MSIX 磁贴/任务栏图标变体 (PackageAssets\*.png, 含 targetsize-*_altform-unplated) 也必须
+      进入 PRI。否则 Windows 11 无法通过 MRT 找到 altform-unplated 变体, 会回退到系统底板
+      (任务栏图标出现"边框")。源目录由 make_msix_assets.ps1 生成, 构建前需已存在。
+    -->
+    <ItemGroup>
+      <_TilePng Include="$(MSBuildThisFileDirectory)PackageAssets\*.png" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_TilePng)"
+          DestinationFiles="@(_TilePng->'$(_PriSrc)PackageAssets\%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
     <Copy SourceFiles="$(MSBuildThisFileDirectory)build\priconfig.xml"
           DestinationFiles="$(OutDir)priconfig.xml" SkipUnchangedFiles="true" />
     <PropertyGroup>
