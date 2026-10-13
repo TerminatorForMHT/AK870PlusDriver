@@ -26,7 +26,14 @@ namespace Ak870Pro.Views
             InitializeComponent();
 
             AppWindow.IsShownInSwitchers = false;
-            var presenter = OverlappedPresenter.CreateForContextMenu();
+            // 明确关掉边框/标题栏/缩放, 并强制 1x1:
+            // CreateForContextMenu 在 MSIX full-trust 下可能保留窗口边框, 导致托盘菜单旁
+            // 露出一个"黑框+白边"的空窗口。
+            var presenter = OverlappedPresenter.Create();
+            presenter.SetBorderAndTitleBar(false, false);
+            presenter.IsResizable = false;
+            presenter.IsMaximizable = false;
+            presenter.IsMinimizable = false;
             AppWindow.SetPresenter(presenter);
             AppWindow.Resize(new SizeInt32(1, 1));
             _pos = new PointInt32(x, y);
@@ -76,8 +83,8 @@ namespace Ak870Pro.Views
                 if (!ReferenceEquals(_current, w)) return;
                 // ContextMenu present 下 Activate 前的 AppWindow.Move 不生效，用 Win32 强制到位
                 var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(w);
-                SetWindowPos(hwnd, IntPtr.Zero, w._pos.X, w._pos.Y, 0, 0,
-                    SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+                SetWindowPos(hwnd, IntPtr.Zero, w._pos.X, w._pos.Y, 1, 1,
+                    SWP_NOZORDER | SWP_NOACTIVATE);
                 w._flyout.ShowAt(w.Anchor, new Point(0, 0));
             };
             w.Activate();
