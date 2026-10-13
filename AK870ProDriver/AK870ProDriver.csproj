@@ -45,12 +45,52 @@
 
   <ItemGroup>
     <Content Include="Assets\Layouts\rgb-keyboard.xml" CopyToOutputDirectory="PreserveNewest" />
-    <!-- MRT Core 启动必需; 由 makepri 生成 (Windows Kits\10\bin\10.0.22621.0\x64\makepri.exe new /pr . /cf priconfig.xml /in Ak870Pro) -->
-    <Content Include="resources.pri" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Assets\app.ico" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Assets\app_256.png" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Assets\app_32.png" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+
+  <!--
+    resources.pri 必须在每次构建后从"实际输出目录"生成:
+    WinUI3 的 LoadComponent("ms-appx:///Xxx.xaml") 经 MRT 解析, 候选必须指向紧邻 exe 的
+    XBF 数据。若 PRI 缺失或候选路径指向他处, MRT 会向上层目录漫游命中过期 XBF
+    (随机堆损坏 0xc0000374) 或全部落空 (XamlParseException)。
+    另一方面, XamlControlsResources 需要 ms-appx:///Microsoft.UI.Xaml/Themes/themeresources.xaml
+    等框架资源, 这些必须由 PRI 索引器从框架自带 *.pri 合并进应用 PRI (EmbeddedData)。
+    若直接对整个输出目录做 folder+PRI 双索引, 框架散落资产文件会与合并项值冲突 (PRI277)。
+    做法: 在输出目录建 staging (prisrc\), 只放 XBF 转出的 *.xaml 与框架 *.pri,
+    对 staging 生成 resources.pri —— 应用候选=exe 相对路径, 框架资源完整合并, 且无冲突。
+  -->
+  <Target Name="GenerateResourcesPri" AfterTargets="Build">
+    <PropertyGroup>
+      <_PriSrc>$(OutDir)prisrc\</_PriSrc>
+    </PropertyGroup>
+    <ItemGroup>
+      <_XbfFiles Include="$(OutDir)**\*.xbf" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_XbfFiles)"
+          DestinationFiles="@(_XbfFiles->'$(OutDir)%(RecursiveDir)%(Filename).xaml')"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(_XbfFiles)"
+          DestinationFiles="@(_XbfFiles->'$(_PriSrc)%(RecursiveDir)%(Filename).xaml')"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(OutDir)Microsoft.UI.pri;$(OutDir)Microsoft.UI.Xaml.Controls.pri"
+          DestinationFolder="$(_PriSrc)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)build\priconfig.xml"
+          DestinationFiles="$(OutDir)priconfig.xml" SkipUnchangedFiles="true" />
+    <PropertyGroup>
+      <_MakePriExe Condition="'$(_MakePriExe)' == '' and Exists('C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\makepri.exe')">C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\makepri.exe</_MakePriExe>
+    </PropertyGroup>
+    <ItemGroup>
+      <_MakePriFromPkg Include="$(PkgMicrosoft_Windows_SDK_BuildTools)tools\bin\*\x64\makepri.exe" />
+    </ItemGroup>
+    <PropertyGroup Condition="'$(_MakePriExe)' == '' and '@(_MakePriFromPkg)' != ''">
+      <_MakePriExe>%(_MakePriFromPkg.FullPath)</_MakePriExe>
+    </PropertyGroup>
+    <Exec Condition="'$(_MakePriExe)' != ''" Command='"$(_MakePriExe)" new /pr "$(_PriSrc)." /cf "$(OutDir)priconfig.xml" /of "$(OutDir)resources.pri" /in Ak870Pro /o' IgnoreExitCode="false" />
+    <Warning Condition="'$(_MakePriExe)' == ''" Text="makepri.exe not found; resources.pri not regenerated" />
+  </Target>
+
 
   <PropertyGroup>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  resources.pri 生成配置 (供 makepri new 使用, 见 AK870ProDriver.csproj 的 GenerateResourcesPri Target)。
+  索引对象是输出目录下的 prisrc\ staging (仅含应用 *.xaml 副本与框架 *.pri):
+  - folder 索引器: 应用 XAML 以 exe 相对路径为候选;
+  - PRI 索引器: 把框架 Microsoft.UI.Xaml.Controls.pri 等的资源以 EmbeddedData 合并进来
+    (XamlControlsResources 需要它们), staging 中无框架散落文件故不会与合并项冲突 (PRI277)。
+-->
+<resources targetOsVersion="10.0.0" majorVersion="1">
+	<index root="\" startIndexAt="\">
+		<default>
+			<qualifier name="Language" value="zh-CN"/>
+			<qualifier name="Contrast" value="standard"/>
+			<qualifier name="Scale" value="100"/>
+			<qualifier name="HomeRegion" value="001"/>
+			<qualifier name="TargetSize" value="256"/>
+			<qualifier name="LayoutDirection" value="LTR"/>
+			<qualifier name="Theme" value="dark"/>
+			<qualifier name="AlternateForm" value=""/>
+			<qualifier name="DXFeatureLevel" value="DX9"/>
+			<qualifier name="Configuration" value=""/>
+			<qualifier name="DeviceFamily" value="Universal"/>
+			<qualifier name="Custom" value=""/>
+		</default>
+		<indexer-config type="folder" foldernameAsQualifier="true" filenameAsQualifier="true" qualifierDelimiter="."/>
+		<indexer-config type="PRI"/>
+	</index>
+</resources>
